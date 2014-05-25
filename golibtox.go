@@ -7,6 +7,24 @@ package golibtox
 
 #include <tox/tox.h>
 #include <stdlib.h>
+
+// Macro for creating callback setter functions.
+//#define SET(x) \
+//static void set_##x(sqlite3 *db, void *conn, int enable) { \
+//        (enable ? sqlite3_##x(db, go_##x, conn) : sqlite3_##x(db, 0, 0)); \
+//}
+
+// util.go exports.
+//int go_busy_handler(void*,int);
+//int go_commit_hook(void*);
+//void go_rollback_hook(void*);
+//void go_update_hook(void*,int,const char*,const char*,sqlite3_int64);
+
+void hook_CallbackFriendRequest(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
+
+static void set_callbackfriendrequest(Tox * t) {
+        tox_callback_friend_request(t, hook_CallbackFriendRequest, NULL);
+	}
 */
 import "C"
 
@@ -17,10 +35,14 @@ import (
 	"unsafe"
 )
 
+var friendRequestFunc FriendRequestFunc
+
 type Tox struct {
 	tox *C.struct_Tox
 	mtx sync.Mutex
 }
+
+type FriendRequestFunc func(publicKey []byte, data []byte, length uint16)
 
 type Server struct {
 	Address string
@@ -36,6 +58,16 @@ const (
 	USERSTATUS_BUSY    UserStatus = C.TOX_USERSTATUS_BUSY
 	USERSTATUS_INVALID UserStatus = C.TOX_USERSTATUS_INVALID
 )
+
+// void tox_callback_friend_request(Tox *tox, void (*function)(Tox *tox, uint8_t *, uint8_t *, uint16_t, void *), void *userdata);
+
+func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {
+	if t.tox != nil {
+		friendRequestFunc = f
+		C.tox_callback_friend_request(t.tox, (*[0]byte)(C.hook_CallbackFriendRequest), unsafe.Pointer(nil))
+	}
+	return
+}
 
 func New() (*Tox, error) {
 	ctox := C.tox_new(C.TOX_ENABLE_IPV6_DEFAULT)

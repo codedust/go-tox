@@ -37,7 +37,9 @@ func main() {
 	server := &golibtox.Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
 	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
 
-	tox.SetName("GolibtoxBot")
+	if !dataLoaded {
+		tox.SetName("GolibtoxBot")
+	}
 
 	badr, _ := tox.GetAddress()
 	fmt.Printf("ID: ")
@@ -55,6 +57,13 @@ func main() {
 			panic(err)
 		}
 	}
+
+	tox.CallbackFriendRequest(func(pubkey []byte, data []byte, length uint16) {
+		fmt.Println("SHBLAH")
+		fmt.Println("%v", pubkey)
+		fmt.Println("%v", data)
+		fmt.Println("%d", length)
+	})
 
 	err = tox.BootstrapFromAddress(server)
 	if err != nil {

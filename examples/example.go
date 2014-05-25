@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -8,37 +9,51 @@ import (
 	"github.com/organ/golibtox"
 )
 
+var dataPath string
+var dataLoaded bool
+
 func main() {
+	flag.StringVar(&dataPath, "save", "", "path to save file")
+	flag.Parse()
+
 	tox, err := golibtox.New()
 	if err != nil {
 		panic(err)
 	}
 
-	// CHANGE THAT
-	//data, err := ioutil.ReadFile("/home/organ/.config/tox/data")
-	//tox.Load(data, (uint32)(len(data)))
-
-	adr, err := tox.GetAddress()
-	fmt.Println(adr)
-
-	connected, err := tox.IsConnected()
-	fmt.Println(connected)
+	if len(dataPath) > 0 {
+		data, err := ioutil.ReadFile(dataPath)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			err = tox.Load(data, (uint32)(len(data)))
+			if err != nil {
+				fmt.Println(err)
+			}
+			dataLoaded = true
+		}
+	}
 
 	server := &golibtox.Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
 	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
 
-	pubkey, err := server.GetPubKey()
-	fmt.Println(pubkey)
+	tox.SetName("GolibtoxBot")
 
-	tox.SetName("Anonymouse")
-	fmt.Println(tox.GetSelfName())
+	badr, _ := tox.GetAddress()
+	fmt.Printf("ID: ")
+	for _, v := range badr {
+		fmt.Printf("%02X", v)
+	}
+	fmt.Println()
 
-	err = tox.SetUserStatus(0)
+	err = tox.SetUserStatus(golibtox.USERSTATUS_BUSY)
 
-	data, err := tox.Save()
-	err = ioutil.WriteFile("data", data, 0644)
-	if err != nil {
-		panic(err)
+	if len(dataPath) > 0 {
+		data, err := tox.Save()
+		err = ioutil.WriteFile(dataPath, data, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	err = tox.BootstrapFromAddress(server)
@@ -46,11 +61,9 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(tox.Size())
-
 	go func() {
 		for {
-			connected, err = tox.IsConnected()
+			connected, _ := tox.IsConnected()
 			fmt.Println("IsConnected() =>", connected)
 			time.Sleep(2 * time.Second)
 		}
@@ -58,7 +71,7 @@ func main() {
 
 	for {
 		tox.Do()
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(25 * time.Millisecond)
 	}
 	tox.Kill()
 }

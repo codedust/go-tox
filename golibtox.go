@@ -28,13 +28,14 @@ type Server struct {
 	Key     string
 }
 
-//typedef enum {
-//	    TOX_USERSTATUS_NONE,
-//		    TOX_USERSTATUS_AWAY,
-//			    TOX_USERSTATUS_BUSY,
-//				    TOX_USERSTATUS_INVALID
-//				}
-//				TOX_USERSTATUS;
+type UserStatus C.uint8_t
+
+const (
+	USERSTATUS_NONE    UserStatus = C.TOX_USERSTATUS_NONE
+	USERSTATUS_AWAY    UserStatus = C.TOX_USERSTATUS_AWAY
+	USERSTATUS_BUSY    UserStatus = C.TOX_USERSTATUS_BUSY
+	USERSTATUS_INVALID UserStatus = C.TOX_USERSTATUS_INVALID
+)
 
 func New() (*Tox, error) {
 	ctox := C.tox_new(C.TOX_ENABLE_IPV6_DEFAULT)
@@ -89,7 +90,7 @@ func (t *Tox) GetSelfName() (string, error) {
 	return name, nil
 }
 
-func (t *Tox) SetUserStatus(status int) error {
+func (t *Tox) SetUserStatus(status UserStatus) error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
 	}

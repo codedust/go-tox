@@ -129,7 +129,7 @@ func (t *Tox) BootstrapFromAddress(s *Server) error {
 		return err
 	}
 
-	C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, (C.uint16_t)(s.Port), (*C.uint8_t)(&pubkey[0]))
+	C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, C.htons((C.uint16_t)(s.Port)), (*C.uint8_t)(&pubkey[0]))
 
 	return nil
 

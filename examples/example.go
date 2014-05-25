@@ -59,10 +59,12 @@ func main() {
 	}
 
 	tox.CallbackFriendRequest(func(pubkey []byte, data []byte, length uint16) {
-		fmt.Println("SHBLAH")
-		fmt.Println("%v", pubkey)
-		fmt.Println("%v", data)
-		fmt.Println("%d", length)
+		fmt.Println("New friend request from %v", pubkey)
+		fmt.Println("With message: %v", data)
+
+		// Auto-accept friend request
+		clientId := pubkey[:golibtox.CLIENT_ID_SIZE]
+		fmt.Println(tox.AddFriendNorequest(clientId))
 	})
 
 	err = tox.BootstrapFromAddress(server)
@@ -74,7 +76,7 @@ func main() {
 		for {
 			connected, _ := tox.IsConnected()
 			fmt.Println("IsConnected() =>", connected)
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}()
 

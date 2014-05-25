@@ -47,6 +47,10 @@ const (
 	USERSTATUS_INVALID UserStatus = C.TOX_USERSTATUS_INVALID
 )
 
+const (
+	CLIENT_ID_SIZE = C.TOX_CLIENT_ID_SIZE
+)
+
 // void tox_callback_friend_request(Tox *tox, void (*function)(Tox *tox, uint8_t *, uint8_t *, uint16_t, void *), void *userdata);
 
 func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {
@@ -120,6 +124,24 @@ func (t *Tox) SetUserStatus(status UserStatus) error {
 		return errors.New("Error setting status")
 	}
 	return nil
+}
+
+//tox_add_friend_norequest(m, pending_frnd_requests[req]);
+//int32_t tox_add_friend_norequest(Tox *tox, uint8_t *client_id);
+func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
+	if t.tox == nil {
+		return -1, errors.New("Tox not initialized")
+	}
+
+	if len(clientId) != CLIENT_ID_SIZE {
+		return -1, errors.New("Incorrect client id")
+	}
+
+	n := C.tox_add_friend_norequest(t.tox, (*C.uint8_t)(&clientId[0]))
+	if n == -1 {
+		return -1, errors.New("Error adding friend")
+	}
+	return (int32)(n), nil
 }
 
 func (t *Tox) Do() error {

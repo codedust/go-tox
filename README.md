@@ -7,8 +7,8 @@ golibtox is a Go wrapper for the Toxcore library.
 ```go get github.com/organ/golibtox```
 
 ## API Functions
-*golibtox is at an early stage of development.
-*Here's a list of the API functions that have been implemented:
+* golibtox is at an early stage of development.
+* Here's a list of the API functions that have been implemented:
 
 ```
 tox_add_friend_norequest

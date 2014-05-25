@@ -29,3 +29,8 @@ func goBytes(p unsafe.Pointer, n C.int) (b []byte) {
 func hook_CallbackFriendRequest(t unsafe.Pointer, publicKey *C.uint8_t, data *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
 	friendRequestFunc(goBytes((unsafe.Pointer)(publicKey), C.TOX_FRIEND_ADDRESS_SIZE), goBytes((unsafe.Pointer)(data), (C.int)(length)), (uint16)(length))
 }
+
+//export hook_CallbackFriendMessage
+func hook_CallbackFriendMessage(t unsafe.Pointer, friendNumber C.int, message *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
+	friendMessageFunc((int)(friendNumber), goBytes((unsafe.Pointer)(message), (C.int)(length)), (uint16)(length))
+}

@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/organ/golibtox"
@@ -48,41 +50,64 @@ func main() {
 	}
 	fmt.Println()
 
-	err = tox.SetUserStatus(golibtox.USERSTATUS_BUSY)
-
-	if len(dataPath) > 0 {
-		data, err := tox.Save()
-		err = ioutil.WriteFile(dataPath, data, 0644)
-		if err != nil {
-			panic(err)
-		}
-	}
+	err = tox.SetUserStatus(golibtox.USERSTATUS_NONE)
 
 	tox.CallbackFriendRequest(func(pubkey []byte, data []byte, length uint16) {
-		fmt.Println("New friend request from %v", pubkey)
-		fmt.Println("With message: %v", data)
+		fmt.Printf("New friend request from %v\n", pubkey)
+		fmt.Printf("With message: %v\n", string(data))
 
 		// Auto-accept friend request
 		clientId := pubkey[:golibtox.CLIENT_ID_SIZE]
 		fmt.Println(tox.AddFriendNorequest(clientId))
 	})
 
+	tox.CallbackFriendMessage(func(friendId int, message []byte, length uint16) {
+		fmt.Printf("New message from %d : %s\n", friendId, string(message))
+		fmt.Println(tox.SendMessage((int32)(friendId), message, (uint32)(length)))
+	})
+
+	saveData(tox)
+
 	err = tox.BootstrapFromAddress(server)
 	if err != nil {
 		panic(err)
 	}
 
+	isRunning := true
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
 	go func() {
 		for {
-			connected, _ := tox.IsConnected()
-			fmt.Println("IsConnected() =>", connected)
-			time.Sleep(10 * time.Second)
+			select {
+			case <-c:
+				fmt.Println("Saving...")
+				if err := saveData(tox); err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("Killing...")
+				isRunning = false
+				tox.Kill()
+				break
+			case <-time.After(time.Second * 10):
+				connected, _ := tox.IsConnected()
+				fmt.Println("IsConnected() =>", connected)
+			}
 		}
 	}()
 
-	for {
+	for isRunning {
 		tox.Do()
 		time.Sleep(25 * time.Millisecond)
 	}
-	tox.Kill()
+}
+func saveData(t *golibtox.Tox) error {
+	var err error
+	var data []byte
+	if len(dataPath) > 0 {
+		data, err = t.Save()
+		err = ioutil.WriteFile(dataPath, data, 0644)
+	}
+	return err
 }

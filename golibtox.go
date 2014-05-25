@@ -11,20 +11,19 @@ import "C"
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"sync"
 	"unsafe"
 )
 
-const BOOTSTRAP_ADDRESS string = "37.187.46.132"
-const BOOTSTRAP_PORT int = 33445
-const BOOTSTRAP_KEY string = "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"
-
 type Tox struct {
 	tox *C.struct_Tox
+	mtx sync.Mutex
 }
 
 type Server struct {
 	Address string
-	Port    int
+	Port    uint16
 	Key     string
 }
 
@@ -48,14 +47,8 @@ func (t *Tox) GetAddress() ([]byte, error) {
 		return nil, errors.New("Error getting address, tox not initialized")
 	}
 
-	//var caddress [C.TOX_FRIEND_ADDRESS_SIZE]C.uint8_t
-	var caddress [C.TOX_FRIEND_ADDRESS_SIZE]byte
-	C.tox_get_address(t.tox, (*C.uint8_t)(&caddress[0]))
-
 	address := make([]byte, C.TOX_FRIEND_ADDRESS_SIZE)
-	for i, v := range caddress {
-		address[i] = (byte)(v)
-	}
+	C.tox_get_address(t.tox, (*C.uint8_t)(&address[0]))
 
 	return address, nil
 }
@@ -87,7 +80,19 @@ func (t *Tox) GetSelfName() (string, error) {
 	return name, nil
 }
 
-func (t *Tox) Connect(s Server) error {
+func (t *Tox) Do() error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	t.mtx.Lock()
+	C.tox_do(t.tox)
+	t.mtx.Unlock()
+
+	return nil
+}
+
+func (t *Tox) BootstrapFromAddress(s *Server) error {
 	//int tox_bootstrap_from_address(Tox *tox, const char *address, uint8_t ipv6enabled,
 	//                              uint16_t port, uint8_t *public_key);
 	if t.tox == nil {
@@ -103,8 +108,11 @@ func (t *Tox) Connect(s Server) error {
 		return err
 	}
 
-	C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, (C.uint16_t)(s.Port), (*C.uint8_t)(&pubkey[0]))
+	ret := C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, (C.uint16_t)(s.Port), (*C.uint8_t)(&pubkey[0]))
 
+	fmt.Println(s.Key)
+	fmt.Println(pubkey, (C.uint16_t)(s.Port))
+	fmt.Println(ret)
 	return nil
 
 }
@@ -124,8 +132,48 @@ func (t *Tox) IsConnected() (bool, error) {
 	return (C.tox_isconnected(t.tox) == 1), nil
 }
 
-func (t *Tox) Do() {
-	//	cbuffer := (*C.uint8_t)(C.malloc(C.TOX_FRIEND_ADDRESS_SIZE))
-	//	defer C.free(unsafe.Pointer(cbuffer))
+/*  return size of messenger data (for saving). */
+//uint32_t tox_size(Tox *tox);
 
+func (t *Tox) Size() (uint32, error) {
+	if t.tox == nil {
+		return 0, errors.New("tox not initialized")
+	}
+
+	return (uint32)(C.tox_size(t.tox)), nil
+}
+
+/* Save the messenger in data (must be allocated memory of size Messenger_size()). */
+//void tox_save(Tox *tox, uint8_t *data);
+
+func (t *Tox) Save() ([]byte, error) {
+	if t.tox == nil {
+		return nil, errors.New("tox not initialized")
+	}
+	size, _ := t.Size()
+
+	data := make([]byte, size)
+	C.tox_save(t.tox, (*C.uint8_t)(&data[0]))
+
+	return data, nil
+
+}
+
+/* Load the messenger from data of size length.
+*
+ *  returns 0 on success
+  *  returns -1 on failure
+*/
+//int tox_load(Tox *tox, uint8_t *data, uint32_t length);
+func (t *Tox) Load(data []byte, length uint32) error {
+	if t.tox == nil {
+		return errors.New("tox not initialized")
+	}
+
+	ret := C.tox_load(t.tox, (*C.uint8_t)(&data[0]), (C.uint32_t)(length))
+
+	if ret == -1 {
+		return errors.New("Error loading data")
+	}
+	return nil
 }

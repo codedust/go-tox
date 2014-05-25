@@ -1,5 +1,7 @@
 package golibtox
 
+// WIP - organ 2014
+
 /*
 #cgo LDFLAGS: -ltoxcore
 
@@ -11,7 +13,6 @@ import "C"
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"sync"
 	"unsafe"
 )
@@ -26,6 +27,14 @@ type Server struct {
 	Port    uint16
 	Key     string
 }
+
+//typedef enum {
+//	    TOX_USERSTATUS_NONE,
+//		    TOX_USERSTATUS_AWAY,
+//			    TOX_USERSTATUS_BUSY,
+//				    TOX_USERSTATUS_INVALID
+//				}
+//				TOX_USERSTATUS;
 
 func New() (*Tox, error) {
 	ctox := C.tox_new(C.TOX_ENABLE_IPV6_DEFAULT)
@@ -80,6 +89,18 @@ func (t *Tox) GetSelfName() (string, error) {
 	return name, nil
 }
 
+func (t *Tox) SetUserStatus(status int) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	ret := C.tox_set_user_status(t.tox, (C.uint8_t)(status))
+	if ret != 0 {
+		return errors.New("Error setting status")
+	}
+	return nil
+}
+
 func (t *Tox) Do() error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
@@ -108,11 +129,8 @@ func (t *Tox) BootstrapFromAddress(s *Server) error {
 		return err
 	}
 
-	ret := C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, (C.uint16_t)(s.Port), (*C.uint8_t)(&pubkey[0]))
+	C.tox_bootstrap_from_address(t.tox, caddr, C.TOX_ENABLE_IPV6_DEFAULT, (C.uint16_t)(s.Port), (*C.uint8_t)(&pubkey[0]))
 
-	fmt.Println(s.Key)
-	fmt.Println(pubkey, (C.uint16_t)(s.Port))
-	fmt.Println(ret)
 	return nil
 
 }

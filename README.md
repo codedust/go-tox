@@ -18,8 +18,12 @@ tox_get_friend_number
 tox_get_name
 tox_get_name_size
 tox_get_self_name_size
+tox_get_self_status_message
+tox_get_status_message
 tox_del_friend
 tox_get_friend_connection_status
+tox_get_self_status_message_size
+tox_get_status_message_size
 tox_friend_exists
 tox_bootstrap_from_address
 tox_callback_friend_message

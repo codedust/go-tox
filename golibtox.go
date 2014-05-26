@@ -347,6 +347,68 @@ func (t *Tox) SetUserStatus(status UserStatus) error {
 	return nil
 }
 
+func (t *Tox) GetStatusMessageSize(friendNumber int32) (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("tox not initialized")
+	}
+
+	ret := C.tox_get_status_message_size(t.tox, (C.int32_t)(friendNumber))
+	if ret == -1 {
+		return -1, errors.New("Error retrieving status message size")
+	}
+
+	return int(ret), nil
+}
+
+func (t *Tox) GetSelfStatusMessageSize() (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("tox not initialized")
+	}
+
+	ret := C.tox_get_self_status_message_size(t.tox)
+	if ret == -1 {
+		return -1, errors.New("Error retrieving self status message size")
+	}
+
+	return int(ret), nil
+}
+
+func (t *Tox) GetStatusMessage(friendNumber int32) ([]byte, error) {
+	if t.tox == nil {
+		return nil, errors.New("Tox not initialized")
+	}
+
+	status := make([]byte, MAX_STATUSMESSAGE_LENGTH)
+
+	n := C.tox_get_status_message(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&status[0]), MAX_STATUSMESSAGE_LENGTH)
+	if n == -1 {
+		return nil, errors.New("Error retrieving status message")
+	}
+
+	// Truncate status to n-byte read
+	status = status[:n]
+
+	return status, nil
+}
+
+func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
+	if t.tox == nil {
+		return nil, errors.New("Tox not initialized")
+	}
+
+	status := make([]byte, MAX_STATUSMESSAGE_LENGTH)
+
+	n := C.tox_get_self_status_message(t.tox, (*C.uint8_t)(&status[0]), MAX_STATUSMESSAGE_LENGTH)
+	if n == -1 {
+		return nil, errors.New("Error retrieving self status message")
+	}
+
+	// Truncate status to n-byte read
+	status = status[:n]
+
+	return status, nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

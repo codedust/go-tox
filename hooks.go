@@ -28,6 +28,6 @@ func hook_callback_friend_request(t unsafe.Pointer, publicKey *C.uint8_t, data *
 }
 
 //export hook_callback_friend_message
-func hook_callback_friend_message(t unsafe.Pointer, friendNumber C.int, message *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
-	friendMessageFunc((int)(friendNumber), goBytes((unsafe.Pointer)(message), (C.int)(length)), (uint16)(length))
+func hook_callback_friend_message(t unsafe.Pointer, friendNumber C.int32_t, message *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
+	friendMessageFunc((int32)(friendNumber), goBytes((unsafe.Pointer)(message), (C.int)(length)), (uint16)(length))
 }

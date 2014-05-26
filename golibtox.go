@@ -16,7 +16,7 @@ static void set_##x(Tox *t) { \
 }
 
 void hook_callback_friend_request(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
-void hook_callback_friend_message(Tox*, int, uint8_t*, uint16_t, void*);
+void hook_callback_friend_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
@@ -31,7 +31,7 @@ import (
 )
 
 type FriendRequestFunc func(publicKey []byte, data []byte, length uint16)
-type FriendMessageFunc func(friendNumber int, message []byte, length uint16)
+type FriendMessageFunc func(friendNumber int32, message []byte, length uint16)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc

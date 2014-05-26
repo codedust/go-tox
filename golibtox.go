@@ -113,33 +113,6 @@ func (t *Tox) GetAddress() ([]byte, error) {
 	return address, nil
 }
 
-func (t *Tox) SetName(name string) error {
-	if t.tox == nil {
-		return errors.New("Tox not initialized")
-	}
-	name += "\x00"
-
-	ret := C.tox_set_name(t.tox, (*C.uint8_t)(&[]byte(name)[0]), (C.uint16_t)(len(name)))
-	if ret != 0 {
-		return errors.New("Error setting name")
-	}
-	return nil
-}
-
-func (t *Tox) GetSelfName() (string, error) {
-	if t.tox == nil {
-		return "", errors.New("Tox not initialized")
-	}
-
-	cname := make([]byte, MAX_NAME_LENGTH)
-
-	n := C.tox_get_self_name(t.tox, (*C.uint8_t)(&cname[0]))
-
-	name := string(cname[:n])
-
-	return name, nil
-}
-
 func (t *Tox) SetUserStatus(status UserStatus) error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
@@ -288,6 +261,53 @@ func (t *Tox) SendActionWithId(friendNumber int32, id uint32, action []byte, len
 		return 0, errors.New("Error sending action")
 	}
 	return uint32(n), nil
+}
+
+func (t *Tox) SetName(name string) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+	name += "\x00"
+
+	ret := C.tox_set_name(t.tox, (*C.uint8_t)(&[]byte(name)[0]), (C.uint16_t)(len(name)))
+	if ret != 0 {
+		return errors.New("Error setting name")
+	}
+	return nil
+}
+
+func (t *Tox) GetSelfName() (string, error) {
+	if t.tox == nil {
+		return "", errors.New("Tox not initialized")
+	}
+
+	cname := make([]byte, MAX_NAME_LENGTH)
+
+	n := C.tox_get_self_name(t.tox, (*C.uint8_t)(&cname[0]))
+	if n == 0 {
+		return "", errors.New("Error retrieving self name")
+	}
+
+	name := string(cname[:n])
+
+	return name, nil
+}
+
+func (t *Tox) GetName(friendNumber int32) (string, error) {
+	if t.tox == nil {
+		return "", errors.New("Tox not initialized")
+	}
+
+	cname := make([]byte, MAX_NAME_LENGTH)
+
+	n := C.tox_get_name(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&cname[0]))
+	if n == -1 {
+		return "", errors.New("Error retrieving name")
+	}
+
+	name := string(cname[:n])
+
+	return name, nil
 }
 
 func (t *Tox) Size() (uint32, error) {

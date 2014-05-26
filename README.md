@@ -13,8 +13,9 @@ golibtox is a Go wrapper for the Toxcore library.
 ```
 tox_add_friend
 tox_add_friend_norequest
-tox_get_friend_number
 tox_get_client_id
+tox_get_friend_number
+tox_get_name
 tox_del_friend
 tox_get_friend_connection_status
 tox_friend_exists
@@ -29,6 +30,8 @@ tox_kill
 tox_load
 tox_new
 tox_save
+tox_send_action
+tox_send_action_withid
 tox_send_message
 tox_send_message_withid
 tox_set_name

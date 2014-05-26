@@ -64,7 +64,9 @@ func main() {
 	tox.CallbackFriendMessage(func(friendNumber int32, message []byte, length uint16) {
 		fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
 		tox.SendMessage(friendNumber, message, uint32(length))
-		tox.SendAction(friendNumber, message, uint32(length))
+		friendName, _ := tox.GetName(friendNumber)
+		greetings := []byte(fmt.Sprintf("I'm awesome, %s.", friendName))
+		tox.SendAction(friendNumber, greetings, uint32(len(greetings)))
 	})
 
 	saveData(tox)

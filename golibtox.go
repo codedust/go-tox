@@ -164,6 +164,24 @@ func (t *Tox) SendMessage(friendNumber int32, message []byte, length uint32) (in
 	return (int32)(n), nil
 }
 
+func (t *Tox) AddFriend(address []byte, data []byte, length uint16) (FriendAddError, error) {
+	if t.tox == nil {
+		return FAERR_UNKNOWN, errors.New("Tox not initialized")
+	}
+
+	if len(address) != FRIEND_ADDRESS_SIZE {
+		return FAERR_UNKNOWN, errors.New("Error adding friend, wrong size for address")
+	}
+
+	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(length))
+
+	if faerr != 0 {
+		return (FriendAddError)(faerr), errors.New("Error adding friend")
+	}
+
+	return (FriendAddError)(faerr), nil
+}
+
 func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
 	if t.tox == nil {
 		return -1, errors.New("Tox not initialized")
@@ -178,6 +196,43 @@ func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
 		return -1, errors.New("Error adding friend")
 	}
 	return (int32)(n), nil
+}
+
+func (t *Tox) GetFriendNumber(clientId []byte) (int32, error) {
+	if t.tox == nil {
+		return -1, errors.New("Tox not initialized")
+	}
+	//int32_t tox_get_friend_number(Tox *tox, uint8_t *client_id);
+	n := C.tox_get_friend_number(t.tox, (*C.uint8_t)(&clientId[0]))
+
+	return (int32)(n), nil
+}
+
+func (t *Tox) GetClientId(friendNumber int32) ([]byte, error) {
+	if t.tox == nil {
+		return nil, errors.New("Tox not initialized")
+	}
+	clientId := make([]byte, CLIENT_ID_SIZE)
+	ret := C.tox_get_client_id(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&clientId[0]))
+
+	if ret != 0 {
+		return nil, errors.New("Error retrieving client id")
+	}
+
+	return clientId, nil
+}
+
+func (t *Tox) DelFriend(friendNumber int32) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+	//int tox_del_friend(Tox *tox, int32_t friendnumber);
+	ret := C.tox_del_friend(t.tox, (C.int32_t)(friendNumber))
+
+	if ret != 0 {
+		return errors.New("Error deleting friend")
+	}
+	return nil
 }
 
 func (t *Tox) Size() (uint32, error) {

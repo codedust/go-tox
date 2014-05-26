@@ -11,7 +11,11 @@ golibtox is a Go wrapper for the Toxcore library.
 * Here's a list of the API functions that have been implemented:
 
 ```
+tox_add_friend
 tox_add_friend_norequest
+tox_get_friend_number
+tox_get_client_id
+tox_del_friend
 tox_bootstrap_from_address
 tox_callback_friend_message
 tox_callback_friend_request

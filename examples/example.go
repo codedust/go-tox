@@ -61,9 +61,9 @@ func main() {
 		fmt.Println(tox.AddFriendNorequest(clientId))
 	})
 
-	tox.CallbackFriendMessage(func(friendId int, message []byte, length uint16) {
-		fmt.Printf("New message from %d : %s\n", friendId, string(message))
-		tox.SendMessage((int32)(friendId), message, (uint32)(length))
+	tox.CallbackFriendMessage(func(friendNumber int, message []byte, length uint16) {
+		fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
+		tox.SendMessage((int32)(friendNumber), message, (uint32)(length))
 	})
 
 	saveData(tox)

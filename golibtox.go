@@ -134,7 +134,7 @@ func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
 		return FAERR_UNKNOWN, errors.New("Error adding friend, wrong size for address")
 	}
 
-	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(address)))
+	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
 
 	if faerr != 0 {
 		return FriendAddError(faerr), errors.New("Error adding friend")

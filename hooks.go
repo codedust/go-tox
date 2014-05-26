@@ -3,10 +3,7 @@ package golibtox
 // Ideas and some funcs from https://code.google.com/p/go-sqlite/source/browse/go1/sqlite3/util.go - Copyright to them...
 
 /*
-
-#include <stdio.h>
 #include <tox/tox.h>
-
 */
 import "C"
 import (

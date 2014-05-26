@@ -266,6 +266,30 @@ func (t *Tox) SendMessageWithId(friendNumber int32, id uint32, message []byte, l
 	return uint32(n), nil
 }
 
+func (t *Tox) SendAction(friendNumber int32, action []byte, length uint32) (uint32, error) {
+	if t.tox == nil {
+		return 0, errors.New("Tox not initialized")
+	}
+
+	n := C.tox_send_action(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(length))
+	if n == 0 {
+		return 0, errors.New("Error sending action")
+	}
+	return uint32(n), nil
+}
+
+func (t *Tox) SendActionWithId(friendNumber int32, id uint32, action []byte, length uint32) (uint32, error) {
+	if t.tox == nil {
+		return 0, errors.New("Tox not initialized")
+	}
+
+	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendNumber), (C.uint32_t)(id), (*C.uint8_t)(&action[0]), (C.uint32_t)(length))
+	if n == 0 {
+		return 0, errors.New("Error sending action")
+	}
+	return uint32(n), nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

@@ -8,17 +8,18 @@ package golibtox
 #include <tox/tox.h>
 #include <stdlib.h>
 
-void hook_CallbackFriendRequest(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
-
-static void set_callbackfriendrequest(Tox *t) {
-	tox_callback_friend_request(t, hook_CallbackFriendRequest, NULL);
+// Convenient macro:
+// Creates the C function to directly register a given callback
+#define HOOK(x) \
+static void set_##x(Tox *t) { \
+	tox_##x(t, hook_##x, NULL); \
 }
 
-void hook_CallbackFriendMessage(Tox*, int, uint8_t*, uint16_t, void*);
+void hook_callback_friend_request(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
+void hook_callback_friend_message(Tox*, int, uint8_t*, uint16_t, void*);
 
-static void set_callbackfriendmessage(Tox *t) {
-	tox_callback_friend_message(t, hook_CallbackFriendMessage, NULL);
-}
+HOOK(callback_friend_request)
+HOOK(callback_friend_message)
 */
 import "C"
 
@@ -224,13 +225,13 @@ func (s *Server) GetPubKey() ([]byte, error) {
 func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {
 	if t.tox != nil {
 		friendRequestFunc = f
-		C.set_callbackfriendrequest(t.tox)
+		C.set_callback_friend_request(t.tox)
 	}
 }
 
 func (t *Tox) CallbackFriendMessage(f FriendMessageFunc) {
 	if t.tox != nil {
 		friendMessageFunc = f
-		C.set_callbackfriendmessage(t.tox)
+		C.set_callback_friend_message(t.tox)
 	}
 }

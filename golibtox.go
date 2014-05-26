@@ -244,7 +244,7 @@ func (t *Tox) SendAction(friendNumber int32, action []byte, length uint32) (uint
 		return 0, errors.New("Tox not initialized")
 	}
 
-	n := C.tox_send_action(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(length))
+	n := C.tox_send_action(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
 	if n == 0 {
 		return 0, errors.New("Error sending action")
 	}
@@ -267,7 +267,6 @@ func (t *Tox) SetName(name string) error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
 	}
-	name += "\x00"
 
 	ret := C.tox_set_name(t.tox, (*C.uint8_t)(&[]byte(name)[0]), (C.uint16_t)(len(name)))
 	if ret != 0 {
@@ -308,6 +307,32 @@ func (t *Tox) GetName(friendNumber int32) (string, error) {
 	name := string(cname[:n])
 
 	return name, nil
+}
+
+func (t *Tox) GetNameSize(friendNumber int32) (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("tox not initialized")
+	}
+
+	ret := C.tox_get_name_size(t.tox, (C.int32_t)(friendNumber))
+	if ret == -1 {
+		return -1, errors.New("Error retrieving name size")
+	}
+
+	return int(ret), nil
+}
+
+func (t *Tox) GetSelfNameSize() (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("tox not initialized")
+	}
+
+	ret := C.tox_get_self_name_size(t.tox)
+	if ret == -1 {
+		return -1, errors.New("Error retrieving self name size")
+	}
+
+	return int(ret), nil
 }
 
 func (t *Tox) Size() (uint32, error) {

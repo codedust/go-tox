@@ -16,6 +16,8 @@ tox_add_friend_norequest
 tox_get_client_id
 tox_get_friend_number
 tox_get_name
+tox_get_name_size
+tox_get_self_name_size
 tox_del_friend
 tox_get_friend_connection_status
 tox_friend_exists

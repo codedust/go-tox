@@ -16,6 +16,8 @@ tox_add_friend_norequest
 tox_get_friend_number
 tox_get_client_id
 tox_del_friend
+tox_get_friend_connection_status
+tox_friend_exists
 tox_bootstrap_from_address
 tox_callback_friend_message
 tox_callback_friend_request
@@ -28,6 +30,7 @@ tox_load
 tox_new
 tox_save
 tox_send_message
+tox_send_message_withid
 tox_set_name
 tox_set_user_status
 tox_size

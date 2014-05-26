@@ -125,7 +125,7 @@ func (t *Tox) SetUserStatus(status UserStatus) error {
 	return nil
 }
 
-func (t *Tox) AddFriend(address []byte, data []byte, length uint16) (FriendAddError, error) {
+func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
 	if t.tox == nil {
 		return FAERR_UNKNOWN, errors.New("Tox not initialized")
 	}
@@ -134,7 +134,7 @@ func (t *Tox) AddFriend(address []byte, data []byte, length uint16) (FriendAddEr
 		return FAERR_UNKNOWN, errors.New("Error adding friend, wrong size for address")
 	}
 
-	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(length))
+	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(address)))
 
 	if faerr != 0 {
 		return FriendAddError(faerr), errors.New("Error adding friend")
@@ -215,31 +215,31 @@ func (t *Tox) FriendExists(friendNumber int32) (bool, error) {
 	return (int(ret) == 1), nil
 }
 
-func (t *Tox) SendMessage(friendNumber int32, message []byte, length uint32) (uint32, error) {
+func (t *Tox) SendMessage(friendNumber int32, message []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("Tox not initialized")
 	}
 
-	n := C.tox_send_message(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&message[0]), (C.uint32_t)(length))
+	n := C.tox_send_message(t.tox, (C.int32_t)(friendNumber), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
 	if n == 0 {
 		return 0, errors.New("Error sending message")
 	}
 	return uint32(n), nil
 }
 
-func (t *Tox) SendMessageWithId(friendNumber int32, id uint32, message []byte, length uint32) (uint32, error) {
+func (t *Tox) SendMessageWithId(friendNumber int32, id uint32, message []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("Tox not initialized")
 	}
 
-	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendNumber), (C.uint32_t)(id), (*C.uint8_t)(&message[0]), (C.uint32_t)(length))
+	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendNumber), (C.uint32_t)(id), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
 	if n == 0 {
 		return 0, errors.New("Error sending message")
 	}
 	return uint32(n), nil
 }
 
-func (t *Tox) SendAction(friendNumber int32, action []byte, length uint32) (uint32, error) {
+func (t *Tox) SendAction(friendNumber int32, action []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("Tox not initialized")
 	}
@@ -251,12 +251,12 @@ func (t *Tox) SendAction(friendNumber int32, action []byte, length uint32) (uint
 	return uint32(n), nil
 }
 
-func (t *Tox) SendActionWithId(friendNumber int32, id uint32, action []byte, length uint32) (uint32, error) {
+func (t *Tox) SendActionWithId(friendNumber int32, id uint32, action []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("Tox not initialized")
 	}
 
-	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendNumber), (C.uint32_t)(id), (*C.uint8_t)(&action[0]), (C.uint32_t)(length))
+	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendNumber), (C.uint32_t)(id), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
 	if n == 0 {
 		return 0, errors.New("Error sending action")
 	}
@@ -356,12 +356,12 @@ func (t *Tox) Save() ([]byte, error) {
 
 }
 
-func (t *Tox) Load(data []byte, length uint32) error {
+func (t *Tox) Load(data []byte) error {
 	if t.tox == nil {
 		return errors.New("tox not initialized")
 	}
 
-	ret := C.tox_load(t.tox, (*C.uint8_t)(&data[0]), (C.uint32_t)(length))
+	ret := C.tox_load(t.tox, (*C.uint8_t)(&data[0]), (C.uint32_t)(len(data)))
 
 	if ret == -1 {
 		return errors.New("Error loading data")

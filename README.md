@@ -19,7 +19,9 @@ tox_get_name
 tox_get_name_size
 tox_get_self_name_size
 tox_get_self_status_message
+tox_get_self_user_status
 tox_get_status_message
+tox_get_user_status
 tox_del_friend
 tox_get_friend_connection_status
 tox_get_self_status_message_size

@@ -409,6 +409,24 @@ func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
 	return status, nil
 }
 
+func (t *Tox) GetUserStatus(friendNumber int32) (UserStatus, error) {
+	if t.tox == nil {
+		return USERSTATUS_INVALID, errors.New("Tox not initialized")
+	}
+	n := C.tox_get_user_status(t.tox, (C.int32_t)(friendNumber))
+
+	return UserStatus(n), nil
+}
+
+func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
+	if t.tox == nil {
+		return USERSTATUS_INVALID, errors.New("Tox not initialized")
+	}
+	n := C.tox_get_self_user_status(t.tox)
+
+	return UserStatus(n), nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

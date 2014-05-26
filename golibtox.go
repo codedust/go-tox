@@ -233,16 +233,25 @@ func (t *Tox) DelFriend(friendNumber int32) error {
 	return nil
 }
 
-func (t *Tox) GetFriendConnectionStatus(friendNumber int32) (int, error) {
+func (t *Tox) GetFriendConnectionStatus(friendNumber int32) (bool, error) {
 	if t.tox == nil {
-		return -1, errors.New("Tox not initialized")
+		return false, errors.New("Tox not initialized")
 	}
-	//int tox_get_friend_connection_status(Tox *tox, int32_t friendnumber);
 	ret := C.tox_get_friend_connection_status(t.tox, (C.int32_t)(friendNumber))
 	if ret == -1 {
-		return -1, errors.New("Error retrieving friend connection status")
+		return false, errors.New("Error retrieving friend connection status")
 	}
-	return int(ret), nil
+	return (int(ret) == 1), nil
+}
+
+func (t *Tox) FriendExists(friendNumber int32) (bool, error) {
+	if t.tox == nil {
+		return false, errors.New("Tox not initialized")
+	}
+	//int tox_friend_exists(Tox *tox, int32_t friendnumber);
+	ret := C.tox_friend_exists(t.tox, (C.int32_t)(friendNumber))
+
+	return (int(ret) == 1), nil
 }
 
 func (t *Tox) Size() (uint32, error) {

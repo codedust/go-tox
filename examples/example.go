@@ -43,6 +43,8 @@ func main() {
 		tox.SetName("GolibtoxBot")
 	}
 
+	tox.SetStatusMessage([]byte("golibtox is cool!"))
+
 	badr, _ := tox.GetAddress()
 	fmt.Printf("ID: ")
 	for _, v := range badr {

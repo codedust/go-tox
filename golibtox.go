@@ -113,18 +113,6 @@ func (t *Tox) GetAddress() ([]byte, error) {
 	return address, nil
 }
 
-func (t *Tox) SetUserStatus(status UserStatus) error {
-	if t.tox == nil {
-		return errors.New("Tox not initialized")
-	}
-
-	ret := C.tox_set_user_status(t.tox, (C.uint8_t)(status))
-	if ret != 0 {
-		return errors.New("Error setting status")
-	}
-	return nil
-}
-
 func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
 	if t.tox == nil {
 		return FAERR_UNKNOWN, errors.New("Tox not initialized")
@@ -333,6 +321,30 @@ func (t *Tox) GetSelfNameSize() (int, error) {
 	}
 
 	return int(ret), nil
+}
+
+func (t *Tox) SetStatusMessage(status []byte) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	ret := C.tox_set_status_message(t.tox, (*C.uint8_t)(&status[0]), (C.uint16_t)(len(status)))
+	if ret != 0 {
+		return errors.New("Error setting status message")
+	}
+	return nil
+}
+
+func (t *Tox) SetUserStatus(status UserStatus) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	ret := C.tox_set_user_status(t.tox, (C.uint8_t)(status))
+	if ret != 0 {
+		return errors.New("Error setting status")
+	}
+	return nil
 }
 
 func (t *Tox) Size() (uint32, error) {

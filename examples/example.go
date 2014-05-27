@@ -13,11 +13,20 @@ import (
 	"github.com/organ/golibtox"
 )
 
+type Server struct {
+	Address   string
+	Port      uint16
+	PublicKey string
+}
+
 func main() {
 	var filepath string
 
 	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
+
+	server := &Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
+	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
 
 	tox, err := golibtox.New()
 	if err != nil {
@@ -48,15 +57,13 @@ func main() {
 	tox.CallbackFriendMessage(func(friendNumber int32, message []byte, length uint16) {
 		fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
 		tox.SendMessage(friendNumber, message)
+		n, _ := tox.GetNumOnlineFriends()
 		friendName, _ := tox.GetName(friendNumber)
-		greetings := fmt.Sprintf("thinks %s is cool.", friendName)
+		greetings := fmt.Sprintf("thinks %s is cool. I have %d online friend(s).", friendName, n)
 		tox.SendAction(friendNumber, []byte(greetings))
 	})
 
-	server := &golibtox.Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
-	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
-
-	err = tox.BootstrapFromAddress(server)
+	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)
 	}

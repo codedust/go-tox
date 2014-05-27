@@ -42,12 +42,6 @@ type Tox struct {
 	mtx sync.Mutex
 }
 
-type Server struct {
-	Address string
-	Port    uint16
-	Key     string
-}
-
 func New() (*Tox, error) {
 	ctox := C.tox_new(ENABLE_IPV6_DEFAULT)
 	if ctox == nil {
@@ -75,24 +69,23 @@ func (t *Tox) Do() error {
 	return nil
 }
 
-func (t *Tox) BootstrapFromAddress(s *Server) error {
+func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey string) error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
 	}
 
-	caddr := C.CString(s.Address)
+	caddr := C.CString(address)
 	defer C.free(unsafe.Pointer(caddr))
 
-	pubkey, err := s.GetPubKey()
+	pubkey, err := hex.DecodeString(hexPublicKey)
 
 	if err != nil {
 		return err
 	}
 
-	C.tox_bootstrap_from_address(t.tox, caddr, ENABLE_IPV6_DEFAULT, C.htons((C.uint16_t)(s.Port)), (*C.uint8_t)(&pubkey[0]))
+	C.tox_bootstrap_from_address(t.tox, caddr, ENABLE_IPV6_DEFAULT, C.htons((C.uint16_t)(port)), (*C.uint8_t)(&pubkey[0]))
 
 	return nil
-
 }
 
 func (t *Tox) IsConnected() (bool, error) {
@@ -550,14 +543,6 @@ func (t *Tox) Load(data []byte) error {
 		return errors.New("Error loading data")
 	}
 	return nil
-}
-
-func (s *Server) GetPubKey() ([]byte, error) {
-	pubkey, err := hex.DecodeString(s.Key)
-	if err != nil {
-		return nil, errors.New("Error decoding server key")
-	}
-	return pubkey, nil
 }
 
 func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {

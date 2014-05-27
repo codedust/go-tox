@@ -471,6 +471,20 @@ func (t *Tox) GetIsTyping(friendNumber int32) (bool, error) {
 	return (ret == 1), nil
 }
 
+func (t *Tox) SetSendsReceipts(friendNumber int32, send bool) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+	csend := 0
+	if send {
+		csend = 1
+	}
+
+	C.tox_set_sends_receipts(t.tox, (C.int32_t)(friendNumber), (C.int)(csend))
+
+	return nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

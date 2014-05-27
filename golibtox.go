@@ -461,6 +461,16 @@ func (t *Tox) SetUserIsTyping(friendNumber int32, isTyping bool) error {
 	return nil
 }
 
+func (t *Tox) GetIsTyping(friendNumber int32) (bool, error) {
+	if t.tox == nil {
+		return false, errors.New("Tox not initialized")
+	}
+
+	ret := C.tox_get_is_typing(t.tox, (C.int32_t)(friendNumber))
+
+	return (ret == 1), nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

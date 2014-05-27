@@ -45,6 +45,7 @@ tox_send_message
 tox_send_message_withid
 tox_set_name
 tox_set_status_message
+tox_set_user_is_typing
 tox_set_user_status
 tox_size
 ```

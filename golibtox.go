@@ -443,6 +443,24 @@ func (t *Tox) GetLastOnline(friendNumber int32) (time.Time, error) {
 	return last, nil
 }
 
+func (t *Tox) SetUserIsTyping(friendNumber int32, isTyping bool) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+	typing := 0
+	if isTyping {
+		typing = 1
+	}
+
+	ret := C.tox_set_user_is_typing(t.tox, (C.int32_t)(friendNumber), (C.uint8_t)(typing))
+
+	if ret != 0 {
+		return errors.New("Error setting typing status")
+	}
+
+	return nil
+}
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

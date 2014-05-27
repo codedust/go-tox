@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,11 +13,10 @@ import (
 	"github.com/organ/golibtox"
 )
 
-var dataPath string
-var dataLoaded bool
-
 func main() {
-	flag.StringVar(&dataPath, "save", "", "path to save file")
+	var filepath string
+
+	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
 
 	tox, err := golibtox.New()
@@ -23,57 +24,37 @@ func main() {
 		panic(err)
 	}
 
-	if len(dataPath) > 0 {
-		data, err := ioutil.ReadFile(dataPath)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			err = tox.Load(data)
-			if err != nil {
-				fmt.Println(err)
-			}
-			dataLoaded = true
-		}
-	}
-
-	server := &golibtox.Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
-	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
-
-	if !dataLoaded {
+	// If no data could be loaded, we should set the name
+	if err := loadData(tox, filepath); err != nil {
 		tox.SetName("GolibtoxBot")
 	}
 
 	tox.SetStatusMessage([]byte("golibtox is cool!"))
 
-	badr, _ := tox.GetAddress()
-	fmt.Printf("ID: ")
-	for _, v := range badr {
-		fmt.Printf("%02X", v)
-	}
-	fmt.Println()
+	addr, _ := tox.GetAddress()
+	fmt.Println("ID: ", hex.EncodeToString(addr))
 
 	err = tox.SetUserStatus(golibtox.USERSTATUS_NONE)
 
 	tox.CallbackFriendRequest(func(pubkey []byte, data []byte, length uint16) {
-		fmt.Printf("New friend request from %v\n", pubkey)
+		fmt.Printf("New friend request from %s\n", hex.EncodeToString(pubkey))
 		fmt.Printf("With message: %v\n", string(data))
 
 		// Auto-accept friend request
 		clientId := pubkey[:golibtox.CLIENT_ID_SIZE]
-		fmt.Println(tox.AddFriendNorequest(clientId))
+		tox.AddFriendNorequest(clientId)
 	})
 
 	tox.CallbackFriendMessage(func(friendNumber int32, message []byte, length uint16) {
 		fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
 		tox.SendMessage(friendNumber, message)
 		friendName, _ := tox.GetName(friendNumber)
-		yoursize, _ := tox.GetNameSize(friendNumber)
-		mysize, _ := tox.GetSelfNameSize()
-		greetings := []byte(fmt.Sprintf("I'm awesome, %s. %d and %d !", friendName, yoursize, mysize))
-		tox.SendAction(friendNumber, greetings)
+		greetings := fmt.Sprintf("thinks %s is cool.", friendName)
+		tox.SendAction(friendNumber, []byte(greetings))
 	})
 
-	saveData(tox)
+	server := &golibtox.Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
+	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
 
 	err = tox.BootstrapFromAddress(server)
 	if err != nil {
@@ -90,10 +71,10 @@ func main() {
 			select {
 			case <-c:
 				fmt.Println("Saving...")
-				if err := saveData(tox); err != nil {
+				if err := saveData(tox, filepath); err != nil {
 					fmt.Println(err)
 				}
-				fmt.Println("Killing...")
+				fmt.Println("Killing")
 				isRunning = false
 				tox.Kill()
 				break
@@ -109,12 +90,32 @@ func main() {
 		time.Sleep(25 * time.Millisecond)
 	}
 }
-func saveData(t *golibtox.Tox) error {
-	var err error
-	var data []byte
-	if len(dataPath) > 0 {
-		data, err = t.Save()
-		err = ioutil.WriteFile(dataPath, data, 0644)
+
+func loadData(t *golibtox.Tox, filepath string) error {
+	if len(filepath) == 0 {
+		return errors.New("Empty path")
 	}
+
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return err
+	}
+
+	err = t.Load(data)
+
+	return err
+}
+
+func saveData(t *golibtox.Tox, filepath string) error {
+	if len(filepath) == 0 {
+		return errors.New("Empty path")
+	}
+
+	data, err := t.Save()
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath, data, 0644)
 	return err
 }

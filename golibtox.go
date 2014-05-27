@@ -427,6 +427,11 @@ func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 	return UserStatus(n), nil
 }
 
+/* returns timestamp of last time friendnumber was seen online, or 0 if never seen.
+* returns -1 on error.
+ */
+//uint64_t tox_get_last_online(Tox *tox, int32_t friendnumber);
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

@@ -8,6 +8,7 @@ golibtox is a Go wrapper for the Toxcore library.
 
 ## API Functions
 * golibtox is at an early stage of development.
+* Documentation for each function will come.
 * Here's a list of the API functions that have been implemented:
 
 ```

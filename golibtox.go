@@ -503,12 +503,20 @@ func (t *Tox) GetNumOnlineFriends() (uint32, error) {
 	return uint32(n), nil
 }
 
-/* Copy a list of valid friend IDs into the array out_list.
-   * If out_list is NULL, returns 0.
-    * Otherwise, returns the number of elements copied.
-	 * If the array was too small, the contents
-	  * of out_list will be truncated to list_size. */
-//////uint32_t tox_get_friendlist(Tox *tox, int32_t *out_list, uint32_t list_size);
+func (t *Tox) GetFriendlist() ([]int32, error) {
+	if t.tox == nil {
+		return nil, errors.New("Tox not initialized")
+	}
+
+	size, _ := t.CountFriendlist()
+	cfriendlist := make([]int32, size)
+
+	n := C.tox_get_friendlist(t.tox, (*C.int32_t)(&cfriendlist[0]), (C.uint32_t)(size))
+
+	friendlist := cfriendlist[:n]
+
+	return friendlist, nil
+}
 
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {

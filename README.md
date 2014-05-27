@@ -25,6 +25,7 @@ tox_get_address
 tox_get_client_id
 tox_get_friend_connection_status
 tox_get_friend_number
+tox_get_friendlist
 tox_get_is_typing
 tox_get_last_online
 tox_get_name

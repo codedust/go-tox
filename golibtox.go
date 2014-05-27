@@ -485,10 +485,6 @@ func (t *Tox) SetSendsReceipts(friendNumber int32, send bool) error {
 	return nil
 }
 
-/* Return the number of friends in the instance m.
- * You should use this to determine how much memory to allocate
-  * for copy_friendlist. */
-////uint32_t tox_count_friendlist(Tox *tox);
 func (t *Tox) CountFriendlist() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("Tox not initialized")
@@ -498,8 +494,14 @@ func (t *Tox) CountFriendlist() (uint32, error) {
 	return uint32(n), nil
 }
 
-/* Return the number of online friends in the instance m. */
-//////uint32_t tox_get_num_online_friends(Tox *tox);
+func (t *Tox) GetNumOnlineFriends() (uint32, error) {
+	if t.tox == nil {
+		return 0, errors.New("Tox not initialized")
+	}
+	n := C.tox_get_num_online_friends(t.tox)
+
+	return uint32(n), nil
+}
 
 /* Copy a list of valid friend IDs into the array out_list.
    * If out_list is NULL, returns 0.

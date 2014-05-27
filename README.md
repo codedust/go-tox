@@ -17,6 +17,7 @@ tox_add_friend_norequest
 tox_bootstrap_from_address
 tox_callback_friend_message
 tox_callback_friend_request
+tox_count_friendlist
 tox_del_friend
 tox_do
 tox_friend_exists
@@ -46,6 +47,7 @@ tox_send_action_withid
 tox_send_message
 tox_send_message_withid
 tox_set_name
+tox_set_sends_receipts
 tox_set_status_message
 tox_set_user_is_typing
 tox_set_user_status

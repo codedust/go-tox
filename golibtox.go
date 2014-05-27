@@ -27,6 +27,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -427,10 +428,20 @@ func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 	return UserStatus(n), nil
 }
 
-/* returns timestamp of last time friendnumber was seen online, or 0 if never seen.
-* returns -1 on error.
- */
-//uint64_t tox_get_last_online(Tox *tox, int32_t friendnumber);
+func (t *Tox) GetLastOnline(friendNumber int32) (time.Time, error) {
+	if t.tox == nil {
+		return time.Time{}, errors.New("Tox not initialized")
+	}
+	ret := C.tox_get_last_online(t.tox, (C.int32_t)(friendNumber))
+
+	if int(ret) == -1 {
+		return time.Time{}, errors.New("Error getting last online time")
+	}
+
+	last := time.Unix(int64(ret), 0)
+
+	return last, nil
+}
 
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {

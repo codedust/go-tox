@@ -26,7 +26,6 @@ func main() {
 	flag.Parse()
 
 	server := &Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
-	//server := &golibtox.Server{"192.254.75.98", 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"}
 
 	tox, err := golibtox.New()
 	if err != nil {
@@ -61,6 +60,10 @@ func main() {
 		friendName, _ := tox.GetName(friendNumber)
 		greetings := fmt.Sprintf("thinks %s is cool. I have %d online friend(s).", friendName, n)
 		tox.SendAction(friendNumber, []byte(greetings))
+	})
+
+	tox.CallbackFriendAction(func(friendNumber int32, action []byte, length uint16) {
+		fmt.Printf("New action from %d : %s\n", friendNumber, string(action))
 	})
 
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)

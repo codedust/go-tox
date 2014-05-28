@@ -24,6 +24,7 @@ void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
 void hook_callback_typing_change(Tox*, int32_t, uint8_t, void*);
 void hook_callback_read_receipt(Tox*, int32_t, uint32_t, void*);
 void hook_callback_connection_status(Tox*, int32_t, uint8_t, void*);
+void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, uint8_t*, uint16_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
@@ -34,6 +35,7 @@ HOOK(callback_user_status)
 HOOK(callback_typing_change)
 HOOK(callback_read_receipt)
 HOOK(callback_connection_status)
+HOOK(callback_file_control)
 
 */
 import "C"
@@ -55,6 +57,7 @@ type UserStatusFunc func(friendNumber int32, status UserStatus)
 type TypingChangeFunc func(friendNumber int32, isTyping bool)
 type ReadReceiptFunc func(friendNumber int32, receipt uint32)
 type ConnectionStatusFunc func(friendNumber int32, status bool)
+type FileControlFunc func(friendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc
@@ -65,6 +68,7 @@ var userStatusFunc UserStatusFunc
 var typingChangeFunc TypingChangeFunc
 var readReceiptFunc ReadReceiptFunc
 var connectionStatusFunc ConnectionStatusFunc
+var fileControlFunc FileControlFunc
 
 type Tox struct {
 	tox *C.struct_Tox
@@ -740,5 +744,12 @@ func (t *Tox) CallbackConnectionStatus(f ConnectionStatusFunc) {
 	if t.tox != nil {
 		connectionStatusFunc = f
 		C.set_callback_connection_status(t.tox)
+	}
+}
+
+func (t *Tox) CallbackFileControl(f FileControlFunc) {
+	if t.tox != nil {
+		fileControlFunc = f
+		C.set_callback_file_control(t.tox)
 	}
 }

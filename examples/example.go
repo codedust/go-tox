@@ -22,6 +22,9 @@ type Server struct {
 func main() {
 	var filepath string
 
+	// Map of active file transfers
+	transfers := make(map[uint8]*os.File)
+
 	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
 
@@ -56,10 +59,6 @@ func main() {
 	tox.CallbackFriendMessage(func(friendNumber int32, message []byte, length uint16) {
 		fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
 		tox.SendMessage(friendNumber, message)
-		n, _ := tox.GetNumOnlineFriends()
-		friendName, _ := tox.GetName(friendNumber)
-		greetings := fmt.Sprintf("thinks %s is cool. I have %d online friend(s).", friendName, n)
-		tox.SendAction(friendNumber, []byte(greetings))
 	})
 
 	tox.CallbackFriendAction(func(friendNumber int32, action []byte, length uint16) {
@@ -90,6 +89,33 @@ func main() {
 		fmt.Printf("New connection status from %d : %v\n", friendNumber, status)
 	})
 
+	tox.CallbackFileSendRequest(func(friendNumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16) {
+		// Accept any file send request
+		tox.FileSendControl(friendNumber, true, filenumber, golibtox.FILECONTROL_ACCEPT, nil)
+		// Init *File handle
+		f, _ := os.Create("example_" + string(filename))
+		// Append f to the map[uint8]*os.File
+		transfers[filenumber] = f
+	})
+
+	tox.CallbackFileControl(func(friendNumber int32, sending bool, filenumber uint8, fileControl golibtox.FileControl, data []byte, length uint16) {
+		// Finished receiving file
+		if fileControl == golibtox.FILECONTROL_FINISHED {
+			f := transfers[filenumber]
+			f.Sync()
+			f.Close()
+			delete(transfers, filenumber)
+			fmt.Println("Written file", filenumber)
+		}
+	})
+
+	tox.CallbackFileData(func(friendNumber int32, filenumber uint8, data []byte, length uint16) {
+		// Write data to the hopefully valid *File handle
+		if f, exists := transfers[filenumber]; exists {
+			f.Write(data)
+		}
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)
@@ -99,29 +125,23 @@ func main() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-
-	go func() {
-		for {
-			select {
-			case <-c:
-				fmt.Println("Saving...")
-				if err := saveData(tox, filepath); err != nil {
-					fmt.Println(err)
-				}
-				fmt.Println("Killing")
-				isRunning = false
-				tox.Kill()
-				break
-			case <-time.After(time.Second * 10):
-				connected, _ := tox.IsConnected()
-				fmt.Println("IsConnected() =>", connected)
-			}
-		}
-	}()
+	ticker := time.NewTicker(25 * time.Millisecond)
 
 	for isRunning {
-		tox.Do()
-		time.Sleep(25 * time.Millisecond)
+		select {
+		case <-c:
+			fmt.Println("Saving...")
+			if err := saveData(tox, filepath); err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println("Killing")
+			isRunning = false
+			tox.Kill()
+			break
+		case <-ticker.C:
+			tox.Do()
+			break
+		}
 	}
 }
 

@@ -594,12 +594,24 @@ func (t *Tox) FileSendControl(friendNumber int32, targetReceiving bool, filenumb
 	return nil
 }
 
-/* Send file data.
-*
- *  return 0 on success
-  *  return -1 on failure
-*/
-//int tox_file_send_data(Tox *tox, int32_t friendnumber, uint8_t filenumber, uint8_t *data, uint16_t length);
+func (t *Tox) FileSendData(friendNumber int32, filenumber uint8, data []byte) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	if len(data) == 0 {
+		return errors.New("Error sending empty data")
+
+	}
+
+	n := C.tox_file_send_data(t.tox, (C.int32_t)(friendNumber), (C.uint8_t)(filenumber), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
+
+	if n == -1 {
+		return errors.New("Error sending file data, is data too big ?")
+	}
+
+	return nil
+}
 
 /* Returns the recommended/maximum size of the filedata you send with tox_file_send_data()
 *

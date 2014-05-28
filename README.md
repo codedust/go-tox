@@ -50,6 +50,7 @@ tox_isconnected
 tox_kill
 tox_load
 tox_new
+tox_new_file_sender
 tox_save
 tox_send_action
 tox_send_action_withid

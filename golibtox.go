@@ -540,6 +540,67 @@ func (t *Tox) GetFriendlist() ([]int32, error) {
 	return friendlist, nil
 }
 
+//TODO
+//uint32_t tox_get_nospam(Tox *tox);
+//void tox_set_nospam(Tox *tox, uint32_t nospam);
+
+/* Send a file send request.
+* Maximum filename length is 255 bytes.
+ *  return file number on success
+  *  return -1 on failure
+*/
+//int tox_new_file_sender(Tox *tox, int32_t friendnumber, uint64_t filesize, uint8_t *filename, uint16_t filename_length);
+func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte) (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("Tox not initialized")
+	}
+
+	if len(filename) > 255 {
+		return -1, errors.New("Filename too long")
+	}
+
+	n := C.tox_new_file_sender(t.tox, (C.int32_t)(friendNumber), (C.uint64_t)(filesize), (*C.uint8_t)(&filename[0]), (C.uint16_t)(len(filename)))
+
+	if n == -1 {
+		return -1, errors.New("Error sending file request")
+	}
+
+	return int(n), nil
+}
+
+/* Send a file control request.
+ *
+  * send_receive is 0 if we want the control packet to target a file we are currently sending,
+   * 1 if it targets a file we are currently receiving.
+    *
+	 *  return 0 on success
+	  *  return -1 on failure
+*/
+//int tox_file_send_control(Tox *tox, int32_t friendnumber, uint8_t send_receive, uint8_t filenumber, uint8_t message_id,uint8_t *data, uint16_t length);
+
+/* Send file data.
+*
+ *  return 0 on success
+  *  return -1 on failure
+*/
+//int tox_file_send_data(Tox *tox, int32_t friendnumber, uint8_t filenumber, uint8_t *data, uint16_t length);
+
+/* Returns the recommended/maximum size of the filedata you send with tox_file_send_data()
+*
+ *  return size on success
+  *  return -1 on failure (currently will never return -1)
+*/
+//int tox_file_data_size(Tox *tox, int32_t friendnumber);
+
+/* Give the number of bytes left to be sent/received.
+  *
+   *  send_receive is 0 if we want the sending files, 1 if we want the receiving.
+    *
+	 *  return number of bytes remaining to be sent/received on success
+	  *  return 0 on failure
+*/
+//uint64_t tox_file_data_remaining(Tox *tox, int32_t friendnumber, uint8_t filenumber, uint8_t send_receive);
+
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, errors.New("tox not initialized")

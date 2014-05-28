@@ -66,6 +66,10 @@ func main() {
 		fmt.Printf("New action from %d : %s\n", friendNumber, string(action))
 	})
 
+	tox.CallbackNameChange(func(friendNumber int32, newName []byte, length uint16) {
+		fmt.Printf("New name from %d : %s\n", friendNumber, string(newName))
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)

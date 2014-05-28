@@ -36,3 +36,8 @@ func hook_callback_friend_message(t unsafe.Pointer, friendNumber C.int32_t, mess
 func hook_callback_friend_action(t unsafe.Pointer, friendNumber C.int32_t, action *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
 	friendActionFunc(int32(friendNumber), goBytes((unsafe.Pointer)(action), (C.int)(length)), uint16(length))
 }
+
+//export hook_callback_name_change
+func hook_callback_name_change(t unsafe.Pointer, friendNumber C.int32_t, newName *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
+	nameChangeFunc(int32(friendNumber), goBytes((unsafe.Pointer)(newName), (C.int)(length)), uint16(length))
+}

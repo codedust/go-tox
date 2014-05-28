@@ -74,3 +74,8 @@ func hook_callback_file_control(t unsafe.Pointer, friendNumber C.int32_t, sendin
 	}
 	fileControlFunc(int32(friendNumber), goSending, uint8(filenumber), FileControl(fileControl), C.GoBytes(unsafe.Pointer(data), C.int(length)), uint16(length))
 }
+
+//export hook_callback_file_data
+func hook_callback_file_data(t unsafe.Pointer, friendNumber C.int32_t, filenumber C.uint8_t, data unsafe.Pointer, length C.uint16_t, userdata unsafe.Pointer) {
+	fileDataFunc(int32(friendNumber), uint8(filenumber), C.GoBytes(unsafe.Pointer(data), C.int(length)), uint16(length))
+}

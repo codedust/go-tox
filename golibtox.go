@@ -24,8 +24,9 @@ void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
 void hook_callback_typing_change(Tox*, int32_t, uint8_t, void*);
 void hook_callback_read_receipt(Tox*, int32_t, uint32_t, void*);
 void hook_callback_connection_status(Tox*, int32_t, uint8_t, void*);
-void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, uint8_t*, uint16_t, void*);
 void hook_callback_file_send_request(Tox*, int32_t, uint8_t, uint64_t, uint8_t*, uint16_t, void*);
+void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, uint8_t*, uint16_t, void*);
+void hook_callback_file_data(Tox*, int32_t, uint8_t, uint8_t*, uint16_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
@@ -36,11 +37,13 @@ HOOK(callback_user_status)
 HOOK(callback_typing_change)
 HOOK(callback_read_receipt)
 HOOK(callback_connection_status)
-HOOK(callback_file_control)
 HOOK(callback_file_send_request)
+HOOK(callback_file_control)
+HOOK(callback_file_data)
 
 */
 import "C"
+
 import (
 	"encoding/hex"
 	"errors"
@@ -58,8 +61,9 @@ type UserStatusFunc func(friendNumber int32, status UserStatus)
 type TypingChangeFunc func(friendNumber int32, isTyping bool)
 type ReadReceiptFunc func(friendNumber int32, receipt uint32)
 type ConnectionStatusFunc func(friendNumber int32, status bool)
-type FileControlFunc func(friendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
 type FileSendRequestFunc func(friendNumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16)
+type FileControlFunc func(friendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
+type FileDataFunc func(friendNumber int32, filenumber uint8, data []byte, length uint16)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc
@@ -70,8 +74,9 @@ var userStatusFunc UserStatusFunc
 var typingChangeFunc TypingChangeFunc
 var readReceiptFunc ReadReceiptFunc
 var connectionStatusFunc ConnectionStatusFunc
-var fileControlFunc FileControlFunc
 var fileSendRequestFunc FileSendRequestFunc
+var fileControlFunc FileControlFunc
+var fileDataFunc FileDataFunc
 
 type Tox struct {
 	tox *C.struct_Tox
@@ -750,6 +755,13 @@ func (t *Tox) CallbackConnectionStatus(f ConnectionStatusFunc) {
 	}
 }
 
+func (t *Tox) CallbackFileSendRequest(f FileSendRequestFunc) {
+	if t.tox != nil {
+		fileSendRequestFunc = f
+		C.set_callback_file_send_request(t.tox)
+	}
+}
+
 func (t *Tox) CallbackFileControl(f FileControlFunc) {
 	if t.tox != nil {
 		fileControlFunc = f
@@ -757,9 +769,9 @@ func (t *Tox) CallbackFileControl(f FileControlFunc) {
 	}
 }
 
-func (t *Tox) CallbackFileSendRequest(f FileSendRequestFunc) {
+func (t *Tox) CallbackFileData(f FileDataFunc) {
 	if t.tox != nil {
-		fileSendRequestFunc = f
-		C.set_callback_file_send_request(t.tox)
+		fileDataFunc = f
+		C.set_callback_file_data(t.tox)
 	}
 }

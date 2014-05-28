@@ -17,6 +17,7 @@ tox_add_friend_norequest
 tox_bootstrap_from_address
 tox_callback_connection_status
 tox_callback_file_control
+tox_callback_file_data
 tox_callback_file_send_request
 tox_callback_friend_action
 tox_callback_friend_message

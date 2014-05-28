@@ -19,11 +19,13 @@ void hook_callback_friend_request(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
 void hook_callback_friend_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_friend_action(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_name_change(Tox*, int32_t, uint8_t*, uint16_t, void*);
+void hook_callback_status_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
 HOOK(callback_friend_action)
 HOOK(callback_name_change)
+HOOK(callback_status_message)
 */
 import "C"
 
@@ -35,20 +37,17 @@ import (
 	"unsafe"
 )
 
-/* Set the callback for name changes.
-*  function(Tox *tox, int32_t friendnumber, uint8_t *newname, uint16_t length, void *userdata)
- *  You are not responsible for freeing newname
-*/
-
 type FriendRequestFunc func(publicKey []byte, data []byte, length uint16)
 type FriendMessageFunc func(friendNumber int32, message []byte, length uint16)
 type FriendActionFunc func(friendNumber int32, action []byte, length uint16)
 type NameChangeFunc func(friendNumber int32, newName []byte, length uint16)
+type StatusMessageFunc func(friendNumber int32, newStatus []byte, length uint16)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc
 var friendActionFunc FriendActionFunc
 var nameChangeFunc NameChangeFunc
+var statusMessageFunc StatusMessageFunc
 
 type Tox struct {
 	tox *C.struct_Tox
@@ -583,5 +582,12 @@ func (t *Tox) CallbackNameChange(f NameChangeFunc) {
 	if t.tox != nil {
 		nameChangeFunc = f
 		C.set_callback_name_change(t.tox)
+	}
+}
+
+func (t *Tox) CallbackStatusMessage(f StatusMessageFunc) {
+	if t.tox != nil {
+		statusMessageFunc = f
+		C.set_callback_status_message(t.tox)
 	}
 }

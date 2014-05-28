@@ -46,3 +46,8 @@ func hook_callback_name_change(t unsafe.Pointer, friendNumber C.int32_t, newName
 func hook_callback_status_message(t unsafe.Pointer, friendNumber C.int32_t, newStatus *C.uint8_t, length C.uint16_t, userdata unsafe.Pointer) {
 	statusMessageFunc(int32(friendNumber), goBytes((unsafe.Pointer)(newStatus), (C.int)(length)), uint16(length))
 }
+
+//export hook_callback_user_status
+func hook_callback_user_status(t unsafe.Pointer, friendNumber C.int32_t, status C.uint8_t, userdata unsafe.Pointer) {
+	userStatusFunc(int32(friendNumber), UserStatus(status))
+}

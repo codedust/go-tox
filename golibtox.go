@@ -20,12 +20,14 @@ void hook_callback_friend_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_friend_action(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_name_change(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_status_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
+void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
 HOOK(callback_friend_action)
 HOOK(callback_name_change)
 HOOK(callback_status_message)
+HOOK(callback_user_status)
 */
 import "C"
 
@@ -42,12 +44,14 @@ type FriendMessageFunc func(friendNumber int32, message []byte, length uint16)
 type FriendActionFunc func(friendNumber int32, action []byte, length uint16)
 type NameChangeFunc func(friendNumber int32, newName []byte, length uint16)
 type StatusMessageFunc func(friendNumber int32, newStatus []byte, length uint16)
+type UserStatusFunc func(friendNumber int32, status UserStatus)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc
 var friendActionFunc FriendActionFunc
 var nameChangeFunc NameChangeFunc
 var statusMessageFunc StatusMessageFunc
+var userStatusFunc UserStatusFunc
 
 type Tox struct {
 	tox *C.struct_Tox
@@ -589,5 +593,12 @@ func (t *Tox) CallbackStatusMessage(f StatusMessageFunc) {
 	if t.tox != nil {
 		statusMessageFunc = f
 		C.set_callback_status_message(t.tox)
+	}
+}
+
+func (t *Tox) CallbackUserStatus(f UserStatusFunc) {
+	if t.tox != nil {
+		userStatusFunc = f
+		C.set_callback_user_status(t.tox)
 	}
 }

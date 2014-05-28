@@ -74,6 +74,10 @@ func main() {
 		fmt.Printf("New status from %d : %s\n", friendNumber, string(newStatus))
 	})
 
+	tox.CallbackUserStatus(func(friendNumber int32, status golibtox.UserStatus) {
+		fmt.Printf("New user status from %d : %s\n", friendNumber, status)
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)

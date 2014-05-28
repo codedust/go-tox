@@ -86,6 +86,10 @@ func main() {
 		fmt.Printf("Got read receipt %d from %d\n", receipt, friendNumber)
 	})
 
+	tox.CallbackConnectionStatus(func(friendNumber int32, status bool) {
+		fmt.Printf("New connection status from %d : %v\n", friendNumber, status)
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)

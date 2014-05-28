@@ -562,13 +562,13 @@ func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte
 	return int(n), nil
 }
 
-func (t *Tox) FileSendControl(friendNumber int32, targetReceiving bool, filenumber uint8, messageId FileControl, data []byte) error {
+func (t *Tox) FileSendControl(friendNumber int32, receiving bool, filenumber uint8, messageId FileControl, data []byte) error {
 	if t.tox == nil {
 		return errors.New("Tox not initialized")
 	}
 
 	cReceiving := 0
-	if targetReceiving {
+	if receiving {
 		cReceiving = 1
 	}
 
@@ -613,21 +613,38 @@ func (t *Tox) FileSendData(friendNumber int32, filenumber uint8, data []byte) er
 	return nil
 }
 
-/* Returns the recommended/maximum size of the filedata you send with tox_file_send_data()
-*
- *  return size on success
-  *  return -1 on failure (currently will never return -1)
-*/
-//int tox_file_data_size(Tox *tox, int32_t friendnumber);
+func (t *Tox) FileDataSize(friendNumber int32) (int, error) {
+	if t.tox == nil {
+		return -1, errors.New("Tox not initialized")
+	}
 
-/* Give the number of bytes left to be sent/received.
-  *
-   *  send_receive is 0 if we want the sending files, 1 if we want the receiving.
-    *
-	 *  return number of bytes remaining to be sent/received on success
-	  *  return 0 on failure
-*/
-//uint64_t tox_file_data_remaining(Tox *tox, int32_t friendnumber, uint8_t filenumber, uint8_t send_receive);
+	n := C.tox_file_data_size(t.tox, (C.int32_t)(friendNumber))
+
+	if n == -1 {
+		return -1, errors.New("Error getting file data size")
+	}
+
+	return int(n), nil
+}
+
+func (t *Tox) FileDataRemaining(friendNumber int32, filenumber uint8, receiving bool) (uint64, error) {
+	if t.tox == nil {
+		return 0, errors.New("Tox not initialized")
+	}
+
+	cReceiving := 0
+	if receiving {
+		cReceiving = 1
+	}
+
+	n := C.tox_file_data_remaining(t.tox, (C.int32_t)(friendNumber), (C.uint8_t)(filenumber), (C.uint8_t)(cReceiving))
+
+	if n == 0 {
+		return 0, errors.New("Error sending file control")
+	}
+
+	return uint64(n), nil
+}
 
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {

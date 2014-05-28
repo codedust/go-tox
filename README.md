@@ -27,6 +27,7 @@ tox_callback_user_status
 tox_count_friendlist
 tox_del_friend
 tox_do
+tox_file_send_control
 tox_friend_exists
 tox_get_address
 tox_get_client_id

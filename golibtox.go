@@ -544,12 +544,6 @@ func (t *Tox) GetFriendlist() ([]int32, error) {
 //uint32_t tox_get_nospam(Tox *tox);
 //void tox_set_nospam(Tox *tox, uint32_t nospam);
 
-/* Send a file send request.
-* Maximum filename length is 255 bytes.
- *  return file number on success
-  *  return -1 on failure
-*/
-//int tox_new_file_sender(Tox *tox, int32_t friendnumber, uint64_t filesize, uint8_t *filename, uint16_t filename_length);
 func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {
 		return -1, errors.New("Tox not initialized")
@@ -568,15 +562,37 @@ func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte
 	return int(n), nil
 }
 
-/* Send a file control request.
- *
-  * send_receive is 0 if we want the control packet to target a file we are currently sending,
-   * 1 if it targets a file we are currently receiving.
-    *
-	 *  return 0 on success
-	  *  return -1 on failure
-*/
-//int tox_file_send_control(Tox *tox, int32_t friendnumber, uint8_t send_receive, uint8_t filenumber, uint8_t message_id,uint8_t *data, uint16_t length);
+func (t *Tox) FileSendControl(friendNumber int32, targetReceiving bool, filenumber uint8, messageId FileControl, data []byte) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	cReceiving := 0
+	if targetReceiving {
+		cReceiving = 1
+	}
+
+	// Stupid workaround to prevent index out of range when using &data[0] if data == nil
+	var cdata *C.uint8_t
+	var clen C.uint16_t
+
+	if data == nil {
+		cdata = nil
+		clen = 0
+	} else {
+		cdata = (*C.uint8_t)(&data[0])
+		clen = (C.uint16_t)(len(data))
+	}
+	// End of stupid workaround
+
+	n := C.tox_file_send_control(t.tox, (C.int32_t)(friendNumber), (C.uint8_t)(cReceiving), (C.uint8_t)(filenumber), (C.uint8_t)(messageId), cdata, clen)
+
+	if n == -1 {
+		return errors.New("Error sending file control")
+	}
+
+	return nil
+}
 
 /* Send file data.
 *

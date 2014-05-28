@@ -61,6 +61,11 @@ func hook_callback_connection_status(t unsafe.Pointer, friendNumber C.int32_t, s
 	connectionStatusFunc(int32(friendNumber), goStatus)
 }
 
+//export hook_callback_file_send_request
+func hook_callback_file_send_request(t unsafe.Pointer, friendNumber C.int32_t, filenumber C.uint8_t, filesize C.uint64_t, filename unsafe.Pointer, filenameLength C.uint16_t, userdata unsafe.Pointer) {
+	fileSendRequestFunc(int32(friendNumber), uint8(filenumber), uint64(filesize), C.GoBytes(unsafe.Pointer(filename), C.int(filenameLength)), uint16(filenameLength))
+}
+
 //export hook_callback_file_control
 func hook_callback_file_control(t unsafe.Pointer, friendNumber C.int32_t, sending C.uint8_t, filenumber C.uint8_t, fileControl C.uint8_t, data unsafe.Pointer, length C.uint16_t, userdata unsafe.Pointer) {
 	goSending := false

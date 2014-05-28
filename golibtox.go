@@ -21,6 +21,7 @@ void hook_callback_friend_action(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_name_change(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_status_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
+void hook_callback_typing_change(Tox*, int32_t, uint8_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)
@@ -28,6 +29,8 @@ HOOK(callback_friend_action)
 HOOK(callback_name_change)
 HOOK(callback_status_message)
 HOOK(callback_user_status)
+HOOK(callback_typing_change)
+
 */
 import "C"
 
@@ -39,12 +42,17 @@ import (
 	"unsafe"
 )
 
+/* Set the callback for typing changes.
+ *  function (Tox *tox, int32_t friendnumber, uint8_t is_typing, void *userdata)
+ */
+
 type FriendRequestFunc func(publicKey []byte, data []byte, length uint16)
 type FriendMessageFunc func(friendNumber int32, message []byte, length uint16)
 type FriendActionFunc func(friendNumber int32, action []byte, length uint16)
 type NameChangeFunc func(friendNumber int32, newName []byte, length uint16)
 type StatusMessageFunc func(friendNumber int32, newStatus []byte, length uint16)
 type UserStatusFunc func(friendNumber int32, status UserStatus)
+type TypingChangeFunc func(friendNumber int32, isTyping bool)
 
 var friendRequestFunc FriendRequestFunc
 var friendMessageFunc FriendMessageFunc
@@ -52,6 +60,7 @@ var friendActionFunc FriendActionFunc
 var nameChangeFunc NameChangeFunc
 var statusMessageFunc StatusMessageFunc
 var userStatusFunc UserStatusFunc
+var typingChangeFunc TypingChangeFunc
 
 type Tox struct {
 	tox *C.struct_Tox
@@ -600,5 +609,12 @@ func (t *Tox) CallbackUserStatus(f UserStatusFunc) {
 	if t.tox != nil {
 		userStatusFunc = f
 		C.set_callback_user_status(t.tox)
+	}
+}
+
+func (t *Tox) CallbackTypingChange(f TypingChangeFunc) {
+	if t.tox != nil {
+		typingChangeFunc = f
+		C.set_callback_typing_change(t.tox)
 	}
 }

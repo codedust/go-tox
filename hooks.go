@@ -51,3 +51,12 @@ func hook_callback_status_message(t unsafe.Pointer, friendNumber C.int32_t, newS
 func hook_callback_user_status(t unsafe.Pointer, friendNumber C.int32_t, status C.uint8_t, userdata unsafe.Pointer) {
 	userStatusFunc(int32(friendNumber), UserStatus(status))
 }
+
+//export hook_callback_typing_change
+func hook_callback_typing_change(t unsafe.Pointer, friendNumber C.int32_t, isTyping C.uint8_t, userdata unsafe.Pointer) {
+	typing := false
+	if isTyping == 1 {
+		typing = true
+	}
+	typingChangeFunc(int32(friendNumber), typing)
+}

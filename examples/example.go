@@ -78,6 +78,10 @@ func main() {
 		fmt.Printf("New user status from %d : %s\n", friendNumber, status)
 	})
 
+	tox.CallbackTypingChange(func(friendNumber int32, isTyping bool) {
+		fmt.Printf("New typing change from %d : %v\n", friendNumber, isTyping)
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)

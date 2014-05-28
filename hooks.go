@@ -60,3 +60,8 @@ func hook_callback_typing_change(t unsafe.Pointer, friendNumber C.int32_t, isTyp
 	}
 	typingChangeFunc(int32(friendNumber), typing)
 }
+
+//export hook_callback_read_receipt
+func hook_callback_read_receipt(t unsafe.Pointer, friendNumber C.int32_t, receipt C.uint32_t, userdata unsafe.Pointer) {
+	readReceiptFunc(int32(friendNumber), uint32(receipt))
+}

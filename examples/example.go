@@ -82,6 +82,10 @@ func main() {
 		fmt.Printf("New typing change from %d : %v\n", friendNumber, isTyping)
 	})
 
+	tox.CallbackReadReceipt(func(friendNumber int32, receipt uint32) {
+		fmt.Printf("Got read receipt %d from %d\n", receipt, friendNumber)
+	})
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)

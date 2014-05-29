@@ -52,35 +52,35 @@ import (
 	"unsafe"
 )
 
-type FriendRequestFunc func(publicKey []byte, data []byte, length uint16)
-type FriendMessageFunc func(friendNumber int32, message []byte, length uint16)
-type FriendActionFunc func(friendNumber int32, action []byte, length uint16)
-type NameChangeFunc func(friendNumber int32, newName []byte, length uint16)
-type StatusMessageFunc func(friendNumber int32, newStatus []byte, length uint16)
-type UserStatusFunc func(friendNumber int32, status UserStatus)
-type TypingChangeFunc func(friendNumber int32, isTyping bool)
-type ReadReceiptFunc func(friendNumber int32, receipt uint32)
-type ConnectionStatusFunc func(friendNumber int32, status bool)
-type FileSendRequestFunc func(friendNumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16)
-type FileControlFunc func(friendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
-type FileDataFunc func(friendNumber int32, filenumber uint8, data []byte, length uint16)
+type OnFriendRequest func(tox *Tox, publicKey []byte, data []byte, length uint16)
+type OnFriendMessage func(tox *Tox, friendNumber int32, message []byte, length uint16)
+type OnFriendAction func(tox *Tox, riendNumber int32, action []byte, length uint16)
+type OnNameChange func(tox *Tox, riendNumber int32, newName []byte, length uint16)
+type OnStatusMessage func(tox *Tox, riendNumber int32, newStatus []byte, length uint16)
+type OnUserStatus func(tox *Tox, riendNumber int32, status UserStatus)
+type OnTypingChange func(tox *Tox, riendNumber int32, isTyping bool)
+type OnReadReceipt func(tox *Tox, riendNumber int32, receipt uint32)
+type OnConnectionStatus func(tox *Tox, riendNumber int32, status bool)
+type OnFileSendRequest func(tox *Tox, riendNumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16)
+type OnFileControl func(tox *Tox, riendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
+type OnFileData func(tox *Tox, friendNumber int32, filenumber uint8, data []byte, length uint16)
 
 type Tox struct {
 	tox *C.struct_Tox
 	mtx sync.Mutex
 	// Callbacks
-	friendRequestFunc    FriendRequestFunc
-	friendMessageFunc    FriendMessageFunc
-	friendActionFunc     FriendActionFunc
-	nameChangeFunc       NameChangeFunc
-	statusMessageFunc    StatusMessageFunc
-	userStatusFunc       UserStatusFunc
-	typingChangeFunc     TypingChangeFunc
-	readReceiptFunc      ReadReceiptFunc
-	connectionStatusFunc ConnectionStatusFunc
-	fileSendRequestFunc  FileSendRequestFunc
-	fileControlFunc      FileControlFunc
-	fileDataFunc         FileDataFunc
+	onFriendRequest    OnFriendRequest
+	onFriendMessage    OnFriendMessage
+	onFriendAction     OnFriendAction
+	onNameChange       OnNameChange
+	onStatusMessage    OnStatusMessage
+	onUserStatus       OnUserStatus
+	onTypingChange     OnTypingChange
+	onReadReceipt      OnReadReceipt
+	onConnectionStatus OnConnectionStatus
+	onFileSendRequest  OnFileSendRequest
+	onFileControl      OnFileControl
+	onFileData         OnFileData
 }
 
 func New() (*Tox, error) {
@@ -692,86 +692,86 @@ func (t *Tox) Load(data []byte) error {
 	return nil
 }
 
-func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {
+func (t *Tox) CallbackFriendRequest(f OnFriendRequest) {
 	if t.tox != nil {
-		t.friendRequestFunc = f
+		t.onFriendRequest = f
 		C.set_callback_friend_request(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackFriendMessage(f FriendMessageFunc) {
+func (t *Tox) CallbackFriendMessage(f OnFriendMessage) {
 	if t.tox != nil {
-		t.friendMessageFunc = f
+		t.onFriendMessage = f
 		C.set_callback_friend_message(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackFriendAction(f FriendActionFunc) {
+func (t *Tox) CallbackFriendAction(f OnFriendAction) {
 	if t.tox != nil {
-		t.friendActionFunc = f
+		t.onFriendAction = f
 		C.set_callback_friend_action(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackNameChange(f NameChangeFunc) {
+func (t *Tox) CallbackNameChange(f OnNameChange) {
 	if t.tox != nil {
-		t.nameChangeFunc = f
+		t.onNameChange = f
 		C.set_callback_name_change(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackStatusMessage(f StatusMessageFunc) {
+func (t *Tox) CallbackStatusMessage(f OnStatusMessage) {
 	if t.tox != nil {
-		t.statusMessageFunc = f
+		t.onStatusMessage = f
 		C.set_callback_status_message(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackUserStatus(f UserStatusFunc) {
+func (t *Tox) CallbackUserStatus(f OnUserStatus) {
 	if t.tox != nil {
-		t.userStatusFunc = f
+		t.onUserStatus = f
 		C.set_callback_user_status(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackTypingChange(f TypingChangeFunc) {
+func (t *Tox) CallbackTypingChange(f OnTypingChange) {
 	if t.tox != nil {
-		t.typingChangeFunc = f
+		t.onTypingChange = f
 		C.set_callback_typing_change(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackReadReceipt(f ReadReceiptFunc) {
+func (t *Tox) CallbackReadReceipt(f OnReadReceipt) {
 	if t.tox != nil {
-		t.readReceiptFunc = f
+		t.onReadReceipt = f
 		C.set_callback_read_receipt(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackConnectionStatus(f ConnectionStatusFunc) {
+func (t *Tox) CallbackConnectionStatus(f OnConnectionStatus) {
 	if t.tox != nil {
-		t.connectionStatusFunc = f
+		t.onConnectionStatus = f
 		C.set_callback_connection_status(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackFileSendRequest(f FileSendRequestFunc) {
+func (t *Tox) CallbackFileSendRequest(f OnFileSendRequest) {
 	if t.tox != nil {
-		t.fileSendRequestFunc = f
+		t.onFileSendRequest = f
 		C.set_callback_file_send_request(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackFileControl(f FileControlFunc) {
+func (t *Tox) CallbackFileControl(f OnFileControl) {
 	if t.tox != nil {
-		t.fileControlFunc = f
+		t.onFileControl = f
 		C.set_callback_file_control(t.tox, unsafe.Pointer(t))
 	}
 }
 
-func (t *Tox) CallbackFileData(f FileDataFunc) {
+func (t *Tox) CallbackFileData(f OnFileData) {
 	if t.tox != nil {
-		t.fileDataFunc = f
+		t.onFileData = f
 		C.set_callback_file_data(t.tox, unsafe.Pointer(t))
 	}
 }

@@ -91,17 +91,17 @@ func main() {
 	}
 }
 
-func onFriendRequest(t *golibtox.Tox, pubkey []byte, data []byte, length uint16) {
+func onFriendRequest(t *golibtox.Tox, publicKey []byte, data []byte, length uint16) {
 	name, _ := t.GetSelfName()
-	fmt.Printf("[%s] New friend request from %s\n", name, hex.EncodeToString(pubkey))
+	fmt.Printf("[%s] New friend request from %s\n", name, hex.EncodeToString(publicKey))
 
 	// Auto-accept friend request
-	clientId := pubkey[:golibtox.CLIENT_ID_SIZE]
+	clientId := publicKey[:golibtox.CLIENT_ID_SIZE]
 	t.AddFriendNorequest(clientId)
 }
 
-func onFriendMessage(t *golibtox.Tox, friendNumber int32, message []byte, length uint16) {
+func onFriendMessage(t *golibtox.Tox, friendnumber int32, message []byte, length uint16) {
 	name, _ := t.GetSelfName()
-	friend, _ := t.GetName(friendNumber)
+	friend, _ := t.GetName(friendnumber)
 	fmt.Printf("[%s] New message from %s : %s\n", name, friend, string(message))
 }

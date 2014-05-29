@@ -92,22 +92,22 @@ func onFriendRequest(t *golibtox.Tox, pubkey []byte, data []byte, length uint16)
 	t.AddFriendNorequest(clientId)
 }
 
-func onFriendMessage(t *golibtox.Tox, friendNumber int32, message []byte, length uint16) {
-	fmt.Printf("New message from %d : %s\n", friendNumber, string(message))
+func onFriendMessage(t *golibtox.Tox, friendnumber int32, message []byte, length uint16) {
+	fmt.Printf("New message from %d : %s\n", friendnumber, string(message))
 	// Echo back
-	t.SendMessage(friendNumber, message)
+	t.SendMessage(friendnumber, message)
 }
 
-func onFileSendRequest(t *golibtox.Tox, friendNumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16) {
+func onFileSendRequest(t *golibtox.Tox, friendnumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16) {
 	// Accept any file send request
-	t.FileSendControl(friendNumber, true, filenumber, golibtox.FILECONTROL_ACCEPT, nil)
+	t.FileSendControl(friendnumber, true, filenumber, golibtox.FILECONTROL_ACCEPT, nil)
 	// Init *File handle
 	f, _ := os.Create("example_" + string(filename))
 	// Append f to the map[uint8]*os.File
 	transfers[filenumber] = f
 }
 
-func onFileControl(t *golibtox.Tox, friendNumber int32, sending bool, filenumber uint8, fileControl golibtox.FileControl, data []byte, length uint16) {
+func onFileControl(t *golibtox.Tox, friendnumber int32, sending bool, filenumber uint8, fileControl golibtox.FileControl, data []byte, length uint16) {
 	// Finished receiving file
 	if fileControl == golibtox.FILECONTROL_FINISHED {
 		f := transfers[filenumber]
@@ -115,11 +115,11 @@ func onFileControl(t *golibtox.Tox, friendNumber int32, sending bool, filenumber
 		f.Close()
 		delete(transfers, filenumber)
 		fmt.Println("Written file", filenumber)
-		t.SendMessage(friendNumber, []byte("Thanks!"))
+		t.SendMessage(friendnumber, []byte("Thanks!"))
 	}
 }
 
-func onFileData(t *golibtox.Tox, friendNumber int32, filenumber uint8, data []byte, length uint16) {
+func onFileData(t *golibtox.Tox, friendnumber int32, filenumber uint8, data []byte, length uint16) {
 	// Write data to the hopefully valid *File handle
 	if f, exists := transfers[filenumber]; exists {
 		f.Write(data)

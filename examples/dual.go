@@ -96,8 +96,7 @@ func onFriendRequest(t *golibtox.Tox, publicKey []byte, data []byte, length uint
 	fmt.Printf("[%s] New friend request from %s\n", name, hex.EncodeToString(publicKey))
 
 	// Auto-accept friend request
-	clientId := publicKey[:golibtox.CLIENT_ID_SIZE]
-	t.AddFriendNorequest(clientId)
+	t.AddFriendNorequest(publicKey)
 }
 
 func onFriendMessage(t *golibtox.Tox, friendnumber int32, message []byte, length uint16) {

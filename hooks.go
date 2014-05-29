@@ -8,7 +8,7 @@ import "unsafe"
 
 //export hook_callback_friend_request
 func hook_callback_friend_request(t unsafe.Pointer, publicKey *C.uint8_t, data *C.uint8_t, length C.uint16_t, tox unsafe.Pointer) {
-	(*Tox)(tox).onFriendRequest((*Tox)(tox), C.GoBytes((unsafe.Pointer)(publicKey), FRIEND_ADDRESS_SIZE), C.GoBytes((unsafe.Pointer)(data), (C.int)(length)), uint16(length))
+	(*Tox)(tox).onFriendRequest((*Tox)(tox), C.GoBytes((unsafe.Pointer)(publicKey), CLIENT_ID_SIZE), C.GoBytes((unsafe.Pointer)(data), (C.int)(length)), uint16(length))
 }
 
 //export hook_callback_friend_message

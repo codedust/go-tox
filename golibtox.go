@@ -562,8 +562,15 @@ func (t *Tox) GetNospam() (uint32, error) {
 	return uint32(n), nil
 }
 
-//TODO
-//void tox_set_nospam(Tox *tox, uint32_t nospam);
+func (t *Tox) SetNospam(nospam uint32) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	C.tox_set_nospam(t.tox, (C.uint32_t)(nospam))
+
+	return nil
+}
 
 func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {

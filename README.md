@@ -1,13 +1,17 @@
 golibtox
 =================
 
-golibtox is a Go wrapper for the Toxcore library.
+golibtox is a Go wrapper for the [Toxcore](https://github.com/irungentoo/ProjectTox-Core) library.
 
 ## Installation
-```go get github.com/organ/golibtox```
+```
+go get github.com/organ/golibtox
+```
+
+## License
+golibtox is licensed under the GPLv3.
 
 ## API Functions
-* golibtox is at an early stage of development.
 * Documentation for each function will come.
 * Here's a list of the API functions that have been implemented:
 

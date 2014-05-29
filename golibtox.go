@@ -11,8 +11,8 @@ package golibtox
 // Convenient macro:
 // Creates the C function to directly register a given callback
 #define HOOK(x) \
-static void set_##x(Tox *t) { \
-	tox_##x(t, hook_##x, NULL); \
+static void set_##x(Tox *tox, void *t) { \
+	tox_##x(tox, hook_##x, t); \
 }
 
 void hook_callback_friend_request(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
@@ -65,22 +65,22 @@ type FileSendRequestFunc func(friendNumber int32, filenumber uint8, filesize uin
 type FileControlFunc func(friendNumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
 type FileDataFunc func(friendNumber int32, filenumber uint8, data []byte, length uint16)
 
-var friendRequestFunc FriendRequestFunc
-var friendMessageFunc FriendMessageFunc
-var friendActionFunc FriendActionFunc
-var nameChangeFunc NameChangeFunc
-var statusMessageFunc StatusMessageFunc
-var userStatusFunc UserStatusFunc
-var typingChangeFunc TypingChangeFunc
-var readReceiptFunc ReadReceiptFunc
-var connectionStatusFunc ConnectionStatusFunc
-var fileSendRequestFunc FileSendRequestFunc
-var fileControlFunc FileControlFunc
-var fileDataFunc FileDataFunc
-
 type Tox struct {
 	tox *C.struct_Tox
 	mtx sync.Mutex
+	// Callbacks
+	friendRequestFunc    FriendRequestFunc
+	friendMessageFunc    FriendMessageFunc
+	friendActionFunc     FriendActionFunc
+	nameChangeFunc       NameChangeFunc
+	statusMessageFunc    StatusMessageFunc
+	userStatusFunc       UserStatusFunc
+	typingChangeFunc     TypingChangeFunc
+	readReceiptFunc      ReadReceiptFunc
+	connectionStatusFunc ConnectionStatusFunc
+	fileSendRequestFunc  FileSendRequestFunc
+	fileControlFunc      FileControlFunc
+	fileDataFunc         FileDataFunc
 }
 
 func New() (*Tox, error) {
@@ -694,84 +694,84 @@ func (t *Tox) Load(data []byte) error {
 
 func (t *Tox) CallbackFriendRequest(f FriendRequestFunc) {
 	if t.tox != nil {
-		friendRequestFunc = f
-		C.set_callback_friend_request(t.tox)
+		t.friendRequestFunc = f
+		C.set_callback_friend_request(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackFriendMessage(f FriendMessageFunc) {
 	if t.tox != nil {
-		friendMessageFunc = f
-		C.set_callback_friend_message(t.tox)
+		t.friendMessageFunc = f
+		C.set_callback_friend_message(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackFriendAction(f FriendActionFunc) {
 	if t.tox != nil {
-		friendActionFunc = f
-		C.set_callback_friend_action(t.tox)
+		t.friendActionFunc = f
+		C.set_callback_friend_action(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackNameChange(f NameChangeFunc) {
 	if t.tox != nil {
-		nameChangeFunc = f
-		C.set_callback_name_change(t.tox)
+		t.nameChangeFunc = f
+		C.set_callback_name_change(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackStatusMessage(f StatusMessageFunc) {
 	if t.tox != nil {
-		statusMessageFunc = f
-		C.set_callback_status_message(t.tox)
+		t.statusMessageFunc = f
+		C.set_callback_status_message(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackUserStatus(f UserStatusFunc) {
 	if t.tox != nil {
-		userStatusFunc = f
-		C.set_callback_user_status(t.tox)
+		t.userStatusFunc = f
+		C.set_callback_user_status(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackTypingChange(f TypingChangeFunc) {
 	if t.tox != nil {
-		typingChangeFunc = f
-		C.set_callback_typing_change(t.tox)
+		t.typingChangeFunc = f
+		C.set_callback_typing_change(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackReadReceipt(f ReadReceiptFunc) {
 	if t.tox != nil {
-		readReceiptFunc = f
-		C.set_callback_read_receipt(t.tox)
+		t.readReceiptFunc = f
+		C.set_callback_read_receipt(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackConnectionStatus(f ConnectionStatusFunc) {
 	if t.tox != nil {
-		connectionStatusFunc = f
-		C.set_callback_connection_status(t.tox)
+		t.connectionStatusFunc = f
+		C.set_callback_connection_status(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackFileSendRequest(f FileSendRequestFunc) {
 	if t.tox != nil {
-		fileSendRequestFunc = f
-		C.set_callback_file_send_request(t.tox)
+		t.fileSendRequestFunc = f
+		C.set_callback_file_send_request(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackFileControl(f FileControlFunc) {
 	if t.tox != nil {
-		fileControlFunc = f
-		C.set_callback_file_control(t.tox)
+		t.fileControlFunc = f
+		C.set_callback_file_control(t.tox, unsafe.Pointer(t))
 	}
 }
 
 func (t *Tox) CallbackFileData(f FileDataFunc) {
 	if t.tox != nil {
-		fileDataFunc = f
-		C.set_callback_file_data(t.tox)
+		t.fileDataFunc = f
+		C.set_callback_file_data(t.tox, unsafe.Pointer(t))
 	}
 }

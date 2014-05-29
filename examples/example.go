@@ -106,6 +106,7 @@ func main() {
 			f.Close()
 			delete(transfers, filenumber)
 			fmt.Println("Written file", filenumber)
+			tox.SendMessage(friendNumber, []byte("Thanks!"))
 		}
 	})
 

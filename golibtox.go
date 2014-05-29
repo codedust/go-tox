@@ -552,9 +552,25 @@ func (t *Tox) GetFriendlist() ([]int32, error) {
 	return friendlist, nil
 }
 
-//TODO
-//uint32_t tox_get_nospam(Tox *tox);
-//void tox_set_nospam(Tox *tox, uint32_t nospam);
+func (t *Tox) GetNospam() (uint32, error) {
+	if t.tox == nil {
+		return 0, errors.New("Tox not initialized")
+	}
+
+	n := C.tox_get_nospam(t.tox)
+
+	return uint32(n), nil
+}
+
+func (t *Tox) SetNospam(nospam uint32) error {
+	if t.tox == nil {
+		return errors.New("Tox not initialized")
+	}
+
+	C.tox_set_nospam(t.tox, (C.uint32_t)(nospam))
+
+	return nil
+}
 
 func (t *Tox) NewFileSender(friendNumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {

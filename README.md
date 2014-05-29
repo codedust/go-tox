@@ -44,6 +44,7 @@ tox_get_is_typing
 tox_get_last_online
 tox_get_name
 tox_get_name_size
+tox_get_nospam
 tox_get_num_online_friends
 tox_get_self_name
 tox_get_self_name_size
@@ -64,6 +65,7 @@ tox_send_action_withid
 tox_send_message
 tox_send_message_withid
 tox_set_name
+tox_set_nospam
 tox_set_sends_receipts
 tox_set_status_message
 tox_set_user_is_typing

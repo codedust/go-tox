@@ -46,7 +46,6 @@ import "C"
 
 import (
 	"encoding/hex"
-	"errors"
 	"sync"
 	"time"
 	"unsafe"
@@ -86,7 +85,7 @@ type Tox struct {
 func New() (*Tox, error) {
 	ctox := C.tox_new(ENABLE_IPV6_DEFAULT)
 	if ctox == nil {
-		return nil, errors.New("Error initializing Tox")
+		return nil, ErrInit
 	}
 
 	t := &Tox{tox: ctox}
@@ -94,13 +93,18 @@ func New() (*Tox, error) {
 	return t, nil
 }
 
-func (t *Tox) Kill() {
+func (t *Tox) Kill() error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
 	C.tox_kill(t.tox)
+
+	return nil
 }
 
 func (t *Tox) Do() error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	t.mtx.Lock()
@@ -112,7 +116,7 @@ func (t *Tox) Do() error {
 
 func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey string) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	caddr := C.CString(address)
@@ -131,7 +135,7 @@ func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey str
 
 func (t *Tox) IsConnected() (bool, error) {
 	if t.tox == nil {
-		return false, errors.New("Error getting address, tox not initialized")
+		return false, ErrBadTox
 	}
 
 	return (C.tox_isconnected(t.tox) == 1), nil
@@ -139,7 +143,7 @@ func (t *Tox) IsConnected() (bool, error) {
 
 func (t *Tox) GetAddress() ([]byte, error) {
 	if t.tox == nil {
-		return nil, errors.New("Error getting address, tox not initialized")
+		return nil, ErrBadTox
 	}
 
 	address := make([]byte, FRIEND_ADDRESS_SIZE)
@@ -150,41 +154,42 @@ func (t *Tox) GetAddress() ([]byte, error) {
 
 func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
 	if t.tox == nil {
-		return FAERR_UNKNOWN, errors.New("Tox not initialized")
+		return FAERR_UNKNOWN, ErrBadTox
 	}
 
 	if len(address) != FRIEND_ADDRESS_SIZE {
-		return FAERR_UNKNOWN, errors.New("Error adding friend, wrong size for address")
+		return FAERR_UNKNOWN, ErrArgs
 	}
 
 	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
 
 	if faerr != 0 {
-		return FriendAddError(faerr), errors.New("Error adding friend")
+		return FriendAddError(faerr), ErrFuncFail
 	}
 
-	return FriendAddError(faerr), nil
+	return 0, nil
 }
 
 func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
 	if t.tox == nil {
-		return -1, errors.New("Tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	if len(clientId) != CLIENT_ID_SIZE {
-		return -1, errors.New("Incorrect client id")
+		return -1, ErrArgs
 	}
 
 	n := C.tox_add_friend_norequest(t.tox, (*C.uint8_t)(&clientId[0]))
 	if n == -1 {
-		return -1, errors.New("Error adding friend")
+		return -1, ErrFuncFail
 	}
+
 	return int32(n), nil
 }
 
 func (t *Tox) GetFriendNumber(clientId []byte) (int32, error) {
 	if t.tox == nil {
-		return -1, errors.New("Tox not initialized")
+		return -1, ErrBadTox
 	}
 	n := C.tox_get_friend_number(t.tox, (*C.uint8_t)(&clientId[0]))
 
@@ -193,13 +198,13 @@ func (t *Tox) GetFriendNumber(clientId []byte) (int32, error) {
 
 func (t *Tox) GetClientId(friendnumber int32) ([]byte, error) {
 	if t.tox == nil {
-		return nil, errors.New("Tox not initialized")
+		return nil, ErrBadTox
 	}
 	clientId := make([]byte, CLIENT_ID_SIZE)
 	ret := C.tox_get_client_id(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&clientId[0]))
 
 	if ret != 0 {
-		return nil, errors.New("Error retrieving client id")
+		return nil, ErrFuncFail
 	}
 
 	return clientId, nil
@@ -207,30 +212,32 @@ func (t *Tox) GetClientId(friendnumber int32) ([]byte, error) {
 
 func (t *Tox) DelFriend(friendnumber int32) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 	ret := C.tox_del_friend(t.tox, (C.int32_t)(friendnumber))
 
 	if ret != 0 {
-		return errors.New("Error deleting friend")
+		return ErrFuncFail
 	}
+
 	return nil
 }
 
 func (t *Tox) GetFriendConnectionStatus(friendnumber int32) (bool, error) {
 	if t.tox == nil {
-		return false, errors.New("Tox not initialized")
+		return false, ErrBadTox
 	}
 	ret := C.tox_get_friend_connection_status(t.tox, (C.int32_t)(friendnumber))
 	if ret == -1 {
-		return false, errors.New("Error retrieving friend connection status")
+		return false, ErrFuncFail
 	}
+
 	return (int(ret) == 1), nil
 }
 
 func (t *Tox) FriendExists(friendnumber int32) (bool, error) {
 	if t.tox == nil {
-		return false, errors.New("Tox not initialized")
+		return false, ErrBadTox
 	}
 	//int tox_friend_exists(Tox *tox, int32_t friendnumber);
 	ret := C.tox_friend_exists(t.tox, (C.int32_t)(friendnumber))
@@ -240,74 +247,79 @@ func (t *Tox) FriendExists(friendnumber int32) (bool, error) {
 
 func (t *Tox) SendMessage(friendnumber int32, message []byte) (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	n := C.tox_send_message(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
 	if n == 0 {
-		return 0, errors.New("Error sending message")
+		return 0, ErrFuncFail
 	}
+
 	return uint32(n), nil
 }
 
 func (t *Tox) SendMessageWithId(friendnumber int32, id uint32, message []byte) (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendnumber), (C.uint32_t)(id), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
 	if n == 0 {
-		return 0, errors.New("Error sending message")
+		return 0, ErrFuncFail
 	}
+
 	return uint32(n), nil
 }
 
 func (t *Tox) SendAction(friendnumber int32, action []byte) (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	n := C.tox_send_action(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
 	if n == 0 {
-		return 0, errors.New("Error sending action")
+		return 0, ErrFuncFail
 	}
+
 	return uint32(n), nil
 }
 
 func (t *Tox) SendActionWithId(friendnumber int32, id uint32, action []byte) (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendnumber), (C.uint32_t)(id), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
 	if n == 0 {
-		return 0, errors.New("Error sending action")
+		return 0, ErrFuncFail
 	}
+
 	return uint32(n), nil
 }
 
 func (t *Tox) SetName(name string) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	ret := C.tox_set_name(t.tox, (*C.uint8_t)(&[]byte(name)[0]), (C.uint16_t)(len(name)))
 	if ret != 0 {
-		return errors.New("Error setting name")
+		return ErrFuncFail
 	}
+
 	return nil
 }
 
 func (t *Tox) GetSelfName() (string, error) {
 	if t.tox == nil {
-		return "", errors.New("Tox not initialized")
+		return "", ErrBadTox
 	}
 
 	cname := make([]byte, MAX_NAME_LENGTH)
 
 	n := C.tox_get_self_name(t.tox, (*C.uint8_t)(&cname[0]))
 	if n == 0 {
-		return "", errors.New("Error retrieving self name")
+		return "", ErrFuncFail
 	}
 
 	name := string(cname[:n])
@@ -317,14 +329,14 @@ func (t *Tox) GetSelfName() (string, error) {
 
 func (t *Tox) GetName(friendnumber int32) (string, error) {
 	if t.tox == nil {
-		return "", errors.New("Tox not initialized")
+		return "", ErrBadTox
 	}
 
 	cname := make([]byte, MAX_NAME_LENGTH)
 
 	n := C.tox_get_name(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&cname[0]))
 	if n == -1 {
-		return "", errors.New("Error retrieving name")
+		return "", ErrFuncFail
 	}
 
 	name := string(cname[:n])
@@ -334,12 +346,12 @@ func (t *Tox) GetName(friendnumber int32) (string, error) {
 
 func (t *Tox) GetNameSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	ret := C.tox_get_name_size(t.tox, (C.int32_t)(friendnumber))
 	if ret == -1 {
-		return -1, errors.New("Error retrieving name size")
+		return -1, ErrFuncFail
 	}
 
 	return int(ret), nil
@@ -347,12 +359,12 @@ func (t *Tox) GetNameSize(friendnumber int32) (int, error) {
 
 func (t *Tox) GetSelfNameSize() (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	ret := C.tox_get_self_name_size(t.tox)
 	if ret == -1 {
-		return -1, errors.New("Error retrieving self name size")
+		return -1, ErrFuncFail
 	}
 
 	return int(ret), nil
@@ -360,36 +372,38 @@ func (t *Tox) GetSelfNameSize() (int, error) {
 
 func (t *Tox) SetStatusMessage(status []byte) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	ret := C.tox_set_status_message(t.tox, (*C.uint8_t)(&status[0]), (C.uint16_t)(len(status)))
 	if ret != 0 {
-		return errors.New("Error setting status message")
+		return ErrFuncFail
 	}
+
 	return nil
 }
 
 func (t *Tox) SetUserStatus(userstatus UserStatus) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	ret := C.tox_set_user_status(t.tox, (C.uint8_t)(userstatus))
 	if ret != 0 {
-		return errors.New("Error setting status")
+		return ErrFuncFail
 	}
+
 	return nil
 }
 
 func (t *Tox) GetStatusMessageSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	ret := C.tox_get_status_message_size(t.tox, (C.int32_t)(friendnumber))
 	if ret == -1 {
-		return -1, errors.New("Error retrieving status message size")
+		return -1, ErrFuncFail
 	}
 
 	return int(ret), nil
@@ -397,12 +411,12 @@ func (t *Tox) GetStatusMessageSize(friendnumber int32) (int, error) {
 
 func (t *Tox) GetSelfStatusMessageSize() (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	ret := C.tox_get_self_status_message_size(t.tox)
 	if ret == -1 {
-		return -1, errors.New("Error retrieving self status message size")
+		return -1, ErrFuncFail
 	}
 
 	return int(ret), nil
@@ -410,14 +424,14 @@ func (t *Tox) GetSelfStatusMessageSize() (int, error) {
 
 func (t *Tox) GetStatusMessage(friendnumber int32) ([]byte, error) {
 	if t.tox == nil {
-		return nil, errors.New("Tox not initialized")
+		return nil, ErrBadTox
 	}
 
 	status := make([]byte, MAX_STATUSMESSAGE_LENGTH)
 
 	n := C.tox_get_status_message(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&status[0]), MAX_STATUSMESSAGE_LENGTH)
 	if n == -1 {
-		return nil, errors.New("Error retrieving status message")
+		return nil, ErrFuncFail
 	}
 
 	// Truncate status to n-byte read
@@ -428,14 +442,14 @@ func (t *Tox) GetStatusMessage(friendnumber int32) ([]byte, error) {
 
 func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
 	if t.tox == nil {
-		return nil, errors.New("Tox not initialized")
+		return nil, ErrBadTox
 	}
 
 	status := make([]byte, MAX_STATUSMESSAGE_LENGTH)
 
 	n := C.tox_get_self_status_message(t.tox, (*C.uint8_t)(&status[0]), MAX_STATUSMESSAGE_LENGTH)
 	if n == -1 {
-		return nil, errors.New("Error retrieving self status message")
+		return nil, ErrFuncFail
 	}
 
 	// Truncate status to n-byte read
@@ -446,7 +460,7 @@ func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
 
 func (t *Tox) GetUserStatus(friendnumber int32) (UserStatus, error) {
 	if t.tox == nil {
-		return USERSTATUS_INVALID, errors.New("Tox not initialized")
+		return USERSTATUS_INVALID, ErrBadTox
 	}
 	n := C.tox_get_user_status(t.tox, (C.int32_t)(friendnumber))
 
@@ -455,7 +469,7 @@ func (t *Tox) GetUserStatus(friendnumber int32) (UserStatus, error) {
 
 func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 	if t.tox == nil {
-		return USERSTATUS_INVALID, errors.New("Tox not initialized")
+		return USERSTATUS_INVALID, ErrBadTox
 	}
 	n := C.tox_get_self_user_status(t.tox)
 
@@ -464,12 +478,13 @@ func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 
 func (t *Tox) GetLastOnline(friendnumber int32) (time.Time, error) {
 	if t.tox == nil {
-		return time.Time{}, errors.New("Tox not initialized")
+		return time.Time{}, ErrBadTox
 	}
+
 	ret := C.tox_get_last_online(t.tox, (C.int32_t)(friendnumber))
 
 	if int(ret) == -1 {
-		return time.Time{}, errors.New("Error getting last online time")
+		return time.Time{}, ErrFuncFail
 	}
 
 	last := time.Unix(int64(ret), 0)
@@ -479,7 +494,7 @@ func (t *Tox) GetLastOnline(friendnumber int32) (time.Time, error) {
 
 func (t *Tox) SetUserIsTyping(friendnumber int32, typing bool) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 	ctyping := 0
 	if typing {
@@ -489,7 +504,7 @@ func (t *Tox) SetUserIsTyping(friendnumber int32, typing bool) error {
 	ret := C.tox_set_user_is_typing(t.tox, (C.int32_t)(friendnumber), (C.uint8_t)(ctyping))
 
 	if ret != 0 {
-		return errors.New("Error setting typing status")
+		return ErrFuncFail
 	}
 
 	return nil
@@ -497,7 +512,7 @@ func (t *Tox) SetUserIsTyping(friendnumber int32, typing bool) error {
 
 func (t *Tox) GetIsTyping(friendnumber int32) (bool, error) {
 	if t.tox == nil {
-		return false, errors.New("Tox not initialized")
+		return false, ErrBadTox
 	}
 
 	ret := C.tox_get_is_typing(t.tox, (C.int32_t)(friendnumber))
@@ -507,7 +522,7 @@ func (t *Tox) GetIsTyping(friendnumber int32) (bool, error) {
 
 func (t *Tox) SetSendsReceipts(friendnumber int32, send bool) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 	csend := 0
 	if send {
@@ -521,7 +536,7 @@ func (t *Tox) SetSendsReceipts(friendnumber int32, send bool) error {
 
 func (t *Tox) CountFriendlist() (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 	n := C.tox_count_friendlist(t.tox)
 
@@ -530,7 +545,7 @@ func (t *Tox) CountFriendlist() (uint32, error) {
 
 func (t *Tox) GetNumOnlineFriends() (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 	n := C.tox_get_num_online_friends(t.tox)
 
@@ -539,7 +554,7 @@ func (t *Tox) GetNumOnlineFriends() (uint32, error) {
 
 func (t *Tox) GetFriendlist() ([]int32, error) {
 	if t.tox == nil {
-		return nil, errors.New("Tox not initialized")
+		return nil, ErrBadTox
 	}
 
 	size, _ := t.CountFriendlist()
@@ -554,7 +569,7 @@ func (t *Tox) GetFriendlist() ([]int32, error) {
 
 func (t *Tox) GetNospam() (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	n := C.tox_get_nospam(t.tox)
@@ -564,7 +579,7 @@ func (t *Tox) GetNospam() (uint32, error) {
 
 func (t *Tox) SetNospam(nospam uint32) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	C.tox_set_nospam(t.tox, (C.uint32_t)(nospam))
@@ -574,17 +589,17 @@ func (t *Tox) SetNospam(nospam uint32) error {
 
 func (t *Tox) NewFileSender(friendnumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("Tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	if len(filename) > 255 {
-		return -1, errors.New("Filename too long")
+		return -1, ErrArgs
 	}
 
 	n := C.tox_new_file_sender(t.tox, (C.int32_t)(friendnumber), (C.uint64_t)(filesize), (*C.uint8_t)(&filename[0]), (C.uint16_t)(len(filename)))
 
 	if n == -1 {
-		return -1, errors.New("Error sending file request")
+		return -1, ErrFuncFail
 	}
 
 	return int(n), nil
@@ -592,7 +607,7 @@ func (t *Tox) NewFileSender(friendnumber int32, filesize uint64, filename []byte
 
 func (t *Tox) FileSendControl(friendnumber int32, receiving bool, filenumber uint8, messageId FileControl, data []byte) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	cReceiving := 0
@@ -616,7 +631,7 @@ func (t *Tox) FileSendControl(friendnumber int32, receiving bool, filenumber uin
 	n := C.tox_file_send_control(t.tox, (C.int32_t)(friendnumber), (C.uint8_t)(cReceiving), (C.uint8_t)(filenumber), (C.uint8_t)(messageId), cdata, clen)
 
 	if n == -1 {
-		return errors.New("Error sending file control")
+		return ErrFuncFail
 	}
 
 	return nil
@@ -624,18 +639,18 @@ func (t *Tox) FileSendControl(friendnumber int32, receiving bool, filenumber uin
 
 func (t *Tox) FileSendData(friendnumber int32, filenumber uint8, data []byte) error {
 	if t.tox == nil {
-		return errors.New("Tox not initialized")
+		return ErrBadTox
 	}
 
 	if len(data) == 0 {
-		return errors.New("Error sending empty data")
+		return ErrArgs
 
 	}
 
 	n := C.tox_file_send_data(t.tox, (C.int32_t)(friendnumber), (C.uint8_t)(filenumber), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
 
 	if n == -1 {
-		return errors.New("Error sending file data, is data too big ?")
+		return ErrFuncFail
 	}
 
 	return nil
@@ -643,13 +658,13 @@ func (t *Tox) FileSendData(friendnumber int32, filenumber uint8, data []byte) er
 
 func (t *Tox) FileDataSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
-		return -1, errors.New("Tox not initialized")
+		return -1, ErrBadTox
 	}
 
 	n := C.tox_file_data_size(t.tox, (C.int32_t)(friendnumber))
 
 	if n == -1 {
-		return -1, errors.New("Error getting file data size")
+		return -1, ErrFuncFail
 	}
 
 	return int(n), nil
@@ -657,7 +672,7 @@ func (t *Tox) FileDataSize(friendnumber int32) (int, error) {
 
 func (t *Tox) FileDataRemaining(friendnumber int32, filenumber uint8, receiving bool) (uint64, error) {
 	if t.tox == nil {
-		return 0, errors.New("Tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	cReceiving := 0
@@ -668,7 +683,7 @@ func (t *Tox) FileDataRemaining(friendnumber int32, filenumber uint8, receiving 
 	n := C.tox_file_data_remaining(t.tox, (C.int32_t)(friendnumber), (C.uint8_t)(filenumber), (C.uint8_t)(cReceiving))
 
 	if n == 0 {
-		return 0, errors.New("Error sending file control")
+		return 0, ErrFuncFail
 	}
 
 	return uint64(n), nil
@@ -676,7 +691,7 @@ func (t *Tox) FileDataRemaining(friendnumber int32, filenumber uint8, receiving 
 
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
-		return 0, errors.New("tox not initialized")
+		return 0, ErrBadTox
 	}
 
 	return uint32(C.tox_size(t.tox)), nil
@@ -684,7 +699,7 @@ func (t *Tox) Size() (uint32, error) {
 
 func (t *Tox) Save() ([]byte, error) {
 	if t.tox == nil {
-		return nil, errors.New("tox not initialized")
+		return nil, ErrBadTox
 	}
 	size, _ := t.Size()
 
@@ -692,19 +707,19 @@ func (t *Tox) Save() ([]byte, error) {
 	C.tox_save(t.tox, (*C.uint8_t)(&data[0]))
 
 	return data, nil
-
 }
 
 func (t *Tox) Load(data []byte) error {
 	if t.tox == nil {
-		return errors.New("tox not initialized")
+		return ErrBadTox
 	}
 
 	ret := C.tox_load(t.tox, (*C.uint8_t)(&data[0]), (C.uint32_t)(len(data)))
 
 	if ret == -1 {
-		return errors.New("Error loading data")
+		return ErrFuncFail
 	}
+
 	return nil
 }
 

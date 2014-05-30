@@ -4,6 +4,14 @@ package golibtox
 #include <tox/tox.h>
 */
 import "C"
+import "errors"
+
+var (
+	ErrInit     = errors.New("Error initializing Tox")
+	ErrBadTox   = errors.New("Tox not initialized")
+	ErrFuncFail = errors.New("Function failed")
+	ErrArgs     = errors.New("Nil arguments or wrong size")
+)
 
 const (
 	MAX_NAME_LENGTH          = C.TOX_MAX_NAME_LENGTH

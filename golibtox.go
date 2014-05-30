@@ -163,11 +163,11 @@ func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
 
 	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
 
-	if faerr != 0 {
+	if faerr < 0 {
 		return FriendAddError(faerr), ErrFuncFail
 	}
 
-	return 0, nil
+	return FriendAddError(faerr), nil
 }
 
 func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {

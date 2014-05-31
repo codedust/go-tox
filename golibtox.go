@@ -152,22 +152,39 @@ func (t *Tox) GetAddress() ([]byte, error) {
 	return address, nil
 }
 
-func (t *Tox) AddFriend(address []byte, data []byte) (FriendAddError, error) {
+func (t *Tox) AddFriend(address []byte, data []byte) (int32, error) {
 	if t.tox == nil {
-		return FAERR_UNKNOWN, ErrBadTox
+		return 0, ErrBadTox
 	}
 
 	if len(address) != FRIEND_ADDRESS_SIZE {
-		return FAERR_UNKNOWN, ErrArgs
+		return 0, ErrArgs
 	}
 
-	faerr := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
+	ret := C.tox_add_friend(t.tox, (*C.uint8_t)(&address[0]), (*C.uint8_t)(&data[0]), (C.uint16_t)(len(data)))
 
-	if faerr < 0 {
-		return FriendAddError(faerr), ErrFuncFail
+	var faerr error
+
+	switch FriendAddError(ret) {
+	case FAERR_TOOLONG:
+		faerr = FaerrTooLong
+	case FAERR_NOMESSAGE:
+		faerr = FaerrNoMessage
+	case FAERR_OWNKEY:
+		faerr = FaerrOwnKey
+	case FAERR_ALREADYSENT:
+		faerr = FaerrAlreadySent
+	case FAERR_UNKNOWN:
+		faerr = FaerrUnkown
+	case FAERR_BADCHECKSUM:
+		faerr = FaerrBadChecksum
+	case FAERR_SETNEWNOSPAM:
+		faerr = FaerrSetNewNospam
+	case FAERR_NOMEM:
+		faerr = FaerrNoMem
 	}
 
-	return FriendAddError(faerr), nil
+	return int32(ret), faerr
 }
 
 func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {

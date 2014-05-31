@@ -6,11 +6,24 @@ package golibtox
 import "C"
 import "errors"
 
+// General errors
 var (
 	ErrInit     = errors.New("Error initializing Tox")
 	ErrBadTox   = errors.New("Tox not initialized")
 	ErrFuncFail = errors.New("Function failed")
 	ErrArgs     = errors.New("Nil arguments or wrong size")
+)
+
+// Errors returned by AddFriend()
+var (
+	FaerrTooLong      = errors.New("Message too long")
+	FaerrNoMessage    = errors.New("Empty message")
+	FaerrOwnKey       = errors.New("Own key")
+	FaerrAlreadySent  = errors.New("Already sent")
+	FaerrUnkown       = errors.New("Unknown error")
+	FaerrBadChecksum  = errors.New("Bad checksum in address")
+	FaerrSetNewNospam = errors.New("Different nospam")
+	FaerrNoMem        = errors.New("Failed increasing friend list")
 )
 
 const (

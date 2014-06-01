@@ -59,23 +59,55 @@ import (
 	"unsafe"
 )
 
+// OnFriendRequest is a callback function called by Tox when receiving a friend request.
 type OnFriendRequest func(tox *Tox, publicKey []byte, data []byte, length uint16)
+
+// OnFriendMessage is a callback function called by Tox when receiving a message.
 type OnFriendMessage func(tox *Tox, friendnumber int32, message []byte, length uint16)
+
+// OnFriendAction is a callback function called by Tox when receiving an action.
 type OnFriendAction func(tox *Tox, friendnumber int32, action []byte, length uint16)
+
+// OnNameChange is a callback function called by Tox when a friend changes his name.
 type OnNameChange func(tox *Tox, friendnumber int32, name []byte, length uint16)
+
+// OnStatusMessage is a callback function called by Tox when a friend changes his status message.
 type OnStatusMessage func(tox *Tox, friendnumber int32, status []byte, length uint16)
+
+// OnUserStatus is a callback function called by Tox when a friend changes status.
 type OnUserStatus func(tox *Tox, friendnumber int32, userstatus UserStatus)
+
+// OnTypingChange is a callback function called by Tox when a friend begins/ends typing.
 type OnTypingChange func(tox *Tox, friendnumber int32, typing bool)
+
+// OnReadReceipt is a callback function called by Tox when receiving a read receipt.
 type OnReadReceipt func(tox *Tox, friendnumber int32, receipt uint32)
+
+// OnConnectionStatus is a callback function called by Tox when a friend comes online/offline.
 type OnConnectionStatus func(tox *Tox, friendnumber int32, online bool)
+
+// OnGroupInvite is a callback function called by Tox when receiving a Groupchat invite.
 type OnGroupInvite func(tox *Tox, friendnumber int32, groupPublicKey []byte)
+
+// OnGroupMessage is a callback function called by Tox when receiving a Groupchat message.
 type OnGroupMessage func(tox *Tox, groupnumber int, friendgroupnumber int, message []byte, length uint16)
+
+// OnGroupAction is a callback function called by Tox when receiving an action from a Groupchat.
 type OnGroupAction func(tox *Tox, groupnumber int, friendgroupnumber int, action []byte, length uint16)
+
+// OnGroupNamelistChange is a callback function called by Tox when a peer connects/disconnects/change name in a Groupchat.
 type OnGroupNamelistChange func(tox *Tox, groupnumber int, peernumber int, change ChatChange)
+
+// OnFileSendRequest is a callback function called by Tox when receiving a file send request.
 type OnFileSendRequest func(tox *Tox, friendnumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16)
+
+// OnFileControl is a callback function called by Tox when receiving a file control flag for a given file transfer.
 type OnFileControl func(tox *Tox, friendnumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
+
+// OnFileData is a callback function called by Tox when data is received for a given file transfer.
 type OnFileData func(tox *Tox, friendnumber int32, filenumber uint8, data []byte, length uint16)
 
+// Tox is the main struct.
 type Tox struct {
 	tox *C.struct_Tox
 	mtx sync.Mutex
@@ -98,6 +130,7 @@ type Tox struct {
 	onFileData            OnFileData
 }
 
+// New returns a new Tox instance.
 func New() (*Tox, error) {
 	ctox := C.tox_new(ENABLE_IPV6_DEFAULT)
 	if ctox == nil {
@@ -109,6 +142,7 @@ func New() (*Tox, error) {
 	return t, nil
 }
 
+// Kill stops a Tox instance.
 func (t *Tox) Kill() error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -118,6 +152,18 @@ func (t *Tox) Kill() error {
 	return nil
 }
 
+// DoInterval returns the time in milliseconds before Do() should be called again.
+func (t *Tox) DoInterval() (uint32, error) {
+	if t.tox == nil {
+		return 0, ErrBadTox
+	}
+
+	ret := C.tox_do_interval(t.tox)
+
+	return uint32(ret), nil
+}
+
+// Do is the main loop needs to be called every DoInterval() milliseconds.
 func (t *Tox) Do() error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -130,6 +176,7 @@ func (t *Tox) Do() error {
 	return nil
 }
 
+// BootstrapFromAddress resolves address into an IP address. If successful, sends a request to the given node to setup connection.
 func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey string) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -149,6 +196,7 @@ func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey str
 	return nil
 }
 
+// IsConnected returns true if Tox is connected to the DHT.
 func (t *Tox) IsConnected() (bool, error) {
 	if t.tox == nil {
 		return false, ErrBadTox
@@ -157,6 +205,7 @@ func (t *Tox) IsConnected() (bool, error) {
 	return (C.tox_isconnected(t.tox) == 1), nil
 }
 
+// GetAddress returns the public address to give to others.
 func (t *Tox) GetAddress() ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -168,6 +217,8 @@ func (t *Tox) GetAddress() ([]byte, error) {
 	return address, nil
 }
 
+// AddFriend adds a friend. Data contains a message that is sent along with the request.
+// Returns the friend number on succes, or a FriendAddError on failure.
 func (t *Tox) AddFriend(address []byte, data []byte) (int32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -203,6 +254,8 @@ func (t *Tox) AddFriend(address []byte, data []byte) (int32, error) {
 	return int32(ret), faerr
 }
 
+// AddFriendNorequest adds a friend without sending a request.
+// Returns the friend number on success.
 func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -220,6 +273,7 @@ func (t *Tox) AddFriendNorequest(clientId []byte) (int32, error) {
 	return int32(n), nil
 }
 
+// GetFriendnumber returns the friend number associated to that clientId.
 func (t *Tox) GetFriendNumber(clientId []byte) (int32, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -229,6 +283,7 @@ func (t *Tox) GetFriendNumber(clientId []byte) (int32, error) {
 	return int32(n), nil
 }
 
+// GetClientId returns the public key associated to that friendnumber.
 func (t *Tox) GetClientId(friendnumber int32) ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -243,6 +298,7 @@ func (t *Tox) GetClientId(friendnumber int32) ([]byte, error) {
 	return clientId, nil
 }
 
+// DelFriend removes a friend.
 func (t *Tox) DelFriend(friendnumber int32) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -256,6 +312,7 @@ func (t *Tox) DelFriend(friendnumber int32) error {
 	return nil
 }
 
+// GetFriendConnectionStatus returns true if the friend is connected.
 func (t *Tox) GetFriendConnectionStatus(friendnumber int32) (bool, error) {
 	if t.tox == nil {
 		return false, ErrBadTox
@@ -268,6 +325,7 @@ func (t *Tox) GetFriendConnectionStatus(friendnumber int32) (bool, error) {
 	return (int(ret) == 1), nil
 }
 
+// FriendExists returns true if a friend exists with given friendnumber.
 func (t *Tox) FriendExists(friendnumber int32) (bool, error) {
 	if t.tox == nil {
 		return false, ErrBadTox

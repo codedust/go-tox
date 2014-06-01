@@ -24,6 +24,10 @@ void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
 void hook_callback_typing_change(Tox*, int32_t, uint8_t, void*);
 void hook_callback_read_receipt(Tox*, int32_t, uint32_t, void*);
 void hook_callback_connection_status(Tox*, int32_t, uint8_t, void*);
+void hook_callback_group_invite(Tox*, int32_t, uint8_t*, void*);
+void hook_callback_group_message(Tox*, int, int, uint8_t*, uint16_t, void*);
+void hook_callback_group_action(Tox*, int, int, uint8_t*, uint16_t, void*);
+void hook_callback_group_namelist_change(Tox*, int, int, uint8_t, void*);
 void hook_callback_file_send_request(Tox*, int32_t, uint8_t, uint64_t, uint8_t*, uint16_t, void*);
 void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, uint8_t*, uint16_t, void*);
 void hook_callback_file_data(Tox*, int32_t, uint8_t, uint8_t*, uint16_t, void*);
@@ -37,6 +41,10 @@ HOOK(callback_user_status)
 HOOK(callback_typing_change)
 HOOK(callback_read_receipt)
 HOOK(callback_connection_status)
+HOOK(callback_group_invite)
+HOOK(callback_group_message)
+HOOK(callback_group_action)
+HOOK(callback_group_namelist_change)
 HOOK(callback_file_send_request)
 HOOK(callback_file_control)
 HOOK(callback_file_data)
@@ -60,6 +68,10 @@ type OnUserStatus func(tox *Tox, friendnumber int32, userstatus UserStatus)
 type OnTypingChange func(tox *Tox, friendnumber int32, typing bool)
 type OnReadReceipt func(tox *Tox, friendnumber int32, receipt uint32)
 type OnConnectionStatus func(tox *Tox, friendnumber int32, online bool)
+type OnGroupInvite func(tox *Tox, friendnumber int32, groupPublicKey []byte)
+type OnGroupMessage func(tox *Tox, groupnumber int, friendgroupnumber int, message []byte, length uint16)
+type OnGroupAction func(tox *Tox, groupnumber int, friendgroupnumber int, action []byte, length uint16)
+type OnGroupNamelistChange func(tox *Tox, groupnumber int, peernumber int, change ChatChange)
 type OnFileSendRequest func(tox *Tox, friendnumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16)
 type OnFileControl func(tox *Tox, friendnumber int32, sending bool, filenumber uint8, fileControl FileControl, data []byte, length uint16)
 type OnFileData func(tox *Tox, friendnumber int32, filenumber uint8, data []byte, length uint16)
@@ -68,18 +80,22 @@ type Tox struct {
 	tox *C.struct_Tox
 	mtx sync.Mutex
 	// Callbacks
-	onFriendRequest    OnFriendRequest
-	onFriendMessage    OnFriendMessage
-	onFriendAction     OnFriendAction
-	onNameChange       OnNameChange
-	onStatusMessage    OnStatusMessage
-	onUserStatus       OnUserStatus
-	onTypingChange     OnTypingChange
-	onReadReceipt      OnReadReceipt
-	onConnectionStatus OnConnectionStatus
-	onFileSendRequest  OnFileSendRequest
-	onFileControl      OnFileControl
-	onFileData         OnFileData
+	onFriendRequest       OnFriendRequest
+	onFriendMessage       OnFriendMessage
+	onFriendAction        OnFriendAction
+	onNameChange          OnNameChange
+	onStatusMessage       OnStatusMessage
+	onUserStatus          OnUserStatus
+	onTypingChange        OnTypingChange
+	onReadReceipt         OnReadReceipt
+	onConnectionStatus    OnConnectionStatus
+	onGroupInvite         OnGroupInvite
+	onGroupMessage        OnGroupMessage
+	onGroupAction         OnGroupAction
+	onGroupNamelistChange OnGroupNamelistChange
+	onFileSendRequest     OnFileSendRequest
+	onFileControl         OnFileControl
+	onFileData            OnFileData
 }
 
 func New() (*Tox, error) {
@@ -604,6 +620,170 @@ func (t *Tox) SetNospam(nospam uint32) error {
 	return nil
 }
 
+func (t *Tox) AddGroupchat() (int, error) {
+	if t.tox == nil {
+		return -1, ErrBadTox
+	}
+
+	ret := C.tox_add_groupchat(t.tox)
+
+	if ret == -1 {
+		return -1, ErrFuncFail
+	}
+
+	return int(ret), nil
+}
+
+func (t *Tox) DelGroupchat(groupnumber int) error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
+
+	ret := C.tox_del_groupchat(t.tox, (C.int)(groupnumber))
+
+	if ret == -1 {
+		return ErrFuncFail
+	}
+
+	return nil
+}
+
+func (t *Tox) GroupPeername(groupnumber int, peernumber int) ([]byte, error) {
+	if t.tox == nil {
+		return nil, ErrBadTox
+	}
+
+	cname := make([]byte, MAX_NAME_LENGTH)
+	ret := C.tox_group_peername(t.tox, (C.int)(groupnumber), (C.int)(peernumber), (*C.uint8_t)(&cname[0]))
+
+	if ret == -1 {
+		return nil, ErrFuncFail
+	}
+
+	name := cname[:ret]
+
+	return name, nil
+}
+
+func (t *Tox) InviteFriend(friendnumber int32, groupnumber int) error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
+
+	ret := C.tox_invite_friend(t.tox, (C.int32_t)(friendnumber), (C.int)(groupnumber))
+
+	if ret == -1 {
+		return ErrFuncFail
+	}
+
+	return nil
+}
+
+func (t *Tox) JoinGroupchat(friendnumber int32, friendGroupPublicKey []byte) (int, error) {
+	if t.tox == nil {
+		return -1, ErrBadTox
+	}
+
+	if len(friendGroupPublicKey) == 0 {
+		return -1, ErrArgs
+	}
+
+	ret := C.tox_join_groupchat(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&friendGroupPublicKey[0]))
+
+	if ret == -1 {
+		return -1, ErrFuncFail
+	}
+
+	return int(ret), nil
+}
+
+func (t *Tox) GroupMessageSend(groupnumber int, message []byte) error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
+
+	if len(message) == 0 {
+		return ErrArgs
+	}
+
+	ret := C.tox_group_message_send(t.tox, (C.int)(groupnumber), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
+
+	if ret == -1 {
+		return ErrFuncFail
+	}
+
+	return nil
+}
+
+func (t *Tox) GroupActionSend(groupnumber int, action []byte) error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
+
+	if len(action) == 0 {
+		return ErrArgs
+	}
+
+	ret := C.tox_group_action_send(t.tox, (C.int)(groupnumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
+
+	if ret == -1 {
+		return ErrFuncFail
+	}
+
+	return nil
+}
+
+func (t *Tox) GroupNumberPeers(groupnumber int) (int, error) {
+	if t.tox == nil {
+		return -1, ErrBadTox
+	}
+
+	ret := C.tox_group_number_peers(t.tox, (C.int)(groupnumber))
+
+	if ret == -1 {
+		return -1, ErrFuncFail
+	}
+
+	return int(ret), nil
+}
+
+//TODO
+/* List all the peers in the group chat.
+*
+* Copies the names of the peers to the name[length][TOX_MAX_NAME_LENGTH] array.
+*
+* Copies the lengths of the names to lengths[length]
+*
+* returns the number of peers on success.
+*
+* return -1 on failure.
+ */
+//int tox_group_get_names(Tox *tox, int groupnumber, uint8_t names[][TOX_MAX_NAME_LENGTH], uint16_t lengths[],uint16_t length);
+
+func (t *Tox) CountChatlist() (uint32, error) {
+	if t.tox == nil {
+		return 0, ErrBadTox
+	}
+	n := C.tox_count_friendlist(t.tox)
+
+	return uint32(n), nil
+}
+
+func (t *Tox) GetChatlist() ([]int, error) {
+	if t.tox == nil {
+		return nil, ErrBadTox
+	}
+
+	size, _ := t.CountChatlist()
+	cchatlist := make([]int, size)
+
+	n := C.tox_get_chatlist(t.tox, (*C.int)(unsafe.Pointer(&cchatlist[0])), (C.uint32_t)(size))
+
+	chatlist := cchatlist[:n]
+
+	return chatlist, nil
+}
+
 func (t *Tox) NewFileSender(friendnumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -821,5 +1001,33 @@ func (t *Tox) CallbackFileData(f OnFileData) {
 	if t.tox != nil {
 		t.onFileData = f
 		C.set_callback_file_data(t.tox, unsafe.Pointer(t))
+	}
+}
+
+func (t *Tox) CallbackGroupInvite(f OnGroupInvite) {
+	if t.tox != nil {
+		t.onGroupInvite = f
+		C.set_callback_group_invite(t.tox, unsafe.Pointer(t))
+	}
+}
+
+func (t *Tox) CallbackGroupMessage(f OnGroupMessage) {
+	if t.tox != nil {
+		t.onGroupMessage = f
+		C.set_callback_group_message(t.tox, unsafe.Pointer(t))
+	}
+}
+
+func (t *Tox) CallbackGroupAction(f OnGroupAction) {
+	if t.tox != nil {
+		t.onGroupAction = f
+		C.set_callback_group_action(t.tox, unsafe.Pointer(t))
+	}
+}
+
+func (t *Tox) CallbackGroupNamelistChange(f OnGroupNamelistChange) {
+	if t.tox != nil {
+		t.onGroupNamelistChange = f
+		C.set_callback_group_namelist_change(t.tox, unsafe.Pointer(t))
 	}
 }

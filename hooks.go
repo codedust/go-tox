@@ -59,6 +59,26 @@ func hook_callback_connection_status(t unsafe.Pointer, friendnumber C.int32_t, c
 	(*Tox)(tox).onConnectionStatus((*Tox)(tox), int32(friendnumber), online)
 }
 
+//export hook_callback_group_invite
+func hook_callback_group_invite(t unsafe.Pointer, friendnumber C.int32_t, groupPublicKey *C.uint8_t, tox unsafe.Pointer) {
+	(*Tox)(tox).onGroupInvite((*Tox)(tox), int32(friendnumber), C.GoBytes((unsafe.Pointer)(groupPublicKey), CLIENT_ID_SIZE))
+}
+
+//export hook_callback_group_message
+func hook_callback_group_message(t unsafe.Pointer, groupnumber C.int, friendgroupnumber C.int, message *C.uint8_t, length C.uint16_t, tox unsafe.Pointer) {
+	(*Tox)(tox).onGroupMessage((*Tox)(tox), int(groupnumber), int(friendgroupnumber), C.GoBytes((unsafe.Pointer)(message), (C.int)(length)), uint16(length))
+}
+
+//export hook_callback_group_action
+func hook_callback_group_action(t unsafe.Pointer, groupnumber C.int, friendgroupnumber C.int, action *C.uint8_t, length C.uint16_t, tox unsafe.Pointer) {
+	(*Tox)(tox).onGroupAction((*Tox)(tox), int(groupnumber), int(friendgroupnumber), C.GoBytes((unsafe.Pointer)(action), (C.int)(length)), uint16(length))
+}
+
+//export hook_callback_group_namelist_change
+func hook_callback_group_namelist_change(t unsafe.Pointer, groupnumber C.int, peernumber C.int, cchange C.uint8_t, tox unsafe.Pointer) {
+	(*Tox)(tox).onGroupNamelistChange((*Tox)(tox), int(groupnumber), int(peernumber), ChatChange(cchange))
+}
+
 //export hook_callback_file_send_request
 func hook_callback_file_send_request(t unsafe.Pointer, friendnumber C.int32_t, filenumber C.uint8_t, filesize C.uint64_t, filename unsafe.Pointer, filenameLength C.uint16_t, tox unsafe.Pointer) {
 	(*Tox)(tox).onFileSendRequest((*Tox)(tox), int32(friendnumber), uint8(filenumber), uint64(filesize), C.GoBytes(unsafe.Pointer(filename), C.int(filenameLength)), uint16(filenameLength))

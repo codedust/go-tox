@@ -76,10 +76,8 @@ func main() {
 			fmt.Println("Killing")
 			isRunning = false
 			tox.Kill()
-			break
 		case <-ticker.C:
 			tox.Do()
-			break
 		}
 	}
 }

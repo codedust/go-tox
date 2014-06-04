@@ -41,6 +41,7 @@ tox_count_friendlist
 tox_del_friend
 tox_del_groupchat
 tox_do
+tox_do_interval
 tox_file_data_remaining
 tox_file_data_size
 tox_file_send_control

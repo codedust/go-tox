@@ -53,6 +53,7 @@ HOOK(callback_file_data)
 import "C"
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"sync"
 	"time"
@@ -191,7 +192,13 @@ func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey str
 		return err
 	}
 
-	C.tox_bootstrap_from_address(t.tox, caddr, ENABLE_IPV6_DEFAULT, C.htons((C.uint16_t)(port)), (*C.uint8_t)(&pubkey[0]))
+	// BigEndian int conversion (Network Byte Order)
+	var cport uint16
+	b := make([]byte, 2)
+	binary.BigEndian.PutUint16(b, port)
+	cport = binary.BigEndian.Uint16(b)
+
+	C.tox_bootstrap_from_address(t.tox, caddr, ENABLE_IPV6_DEFAULT, (C.uint16_t)(cport), (*C.uint8_t)(&pubkey[0]))
 
 	return nil
 }

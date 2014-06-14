@@ -15,7 +15,7 @@ static void set_##x(Tox *tox, void *t) { \
 	tox_##x(tox, hook_##x, t); \
 }
 
-void hook_callback_friend_request(Tox*, uint8_t*, uint8_t*, uint16_t, void*);
+void hook_callback_friend_request(Tox*, const uint8_t*, const uint8_t*, uint16_t, void*);
 void hook_callback_friend_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_friend_action(Tox*, int32_t, uint8_t*, uint16_t, void*);
 void hook_callback_name_change(Tox*, int32_t, uint8_t*, uint16_t, void*);

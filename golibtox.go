@@ -343,6 +343,9 @@ func (t *Tox) FriendExists(friendnumber int32) (bool, error) {
 	return (int(ret) == 1), nil
 }
 
+// SendMessage sends a message to an online friend.
+// Maximum message length is MAX_MESSAGE_LENGTH.
+// Returns the message ID if successful, an error otherwise.
 func (t *Tox) SendMessage(friendnumber int32, message []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -356,7 +359,10 @@ func (t *Tox) SendMessage(friendnumber int32, message []byte) (uint32, error) {
 	return uint32(n), nil
 }
 
-func (t *Tox) SendMessageWithId(friendnumber int32, id uint32, message []byte) (uint32, error) {
+// SendMessageWithID sends a message with a given ID to an online friend.
+// Maximum message length is MAX_MESSAGE_LENGTH.
+// Returns the message ID if successful, an error otherwise.
+func (t *Tox) SendMessageWithID(friendnumber int32, id uint32, message []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -369,6 +375,9 @@ func (t *Tox) SendMessageWithId(friendnumber int32, id uint32, message []byte) (
 	return uint32(n), nil
 }
 
+// SendAction sends an action to an online friend.
+// Maximum action length is MAX_MESSAGE_LENGTH.
+// Returns the message ID if successful, an error otherwise.
 func (t *Tox) SendAction(friendnumber int32, action []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -382,7 +391,10 @@ func (t *Tox) SendAction(friendnumber int32, action []byte) (uint32, error) {
 	return uint32(n), nil
 }
 
-func (t *Tox) SendActionWithId(friendnumber int32, id uint32, action []byte) (uint32, error) {
+// SendActionActionWithID sends an action with a given ID to an online friend.
+// Maximum action length is MAX_MESSAGE_LENGTH.
+// Returns the message ID if successful, an error otherwise.
+func (t *Tox) SendActionWithID(friendnumber int32, id uint32, action []byte) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -395,6 +407,8 @@ func (t *Tox) SendActionWithId(friendnumber int32, id uint32, action []byte) (ui
 	return uint32(n), nil
 }
 
+// SetName sets your nickname.
+// Maximum name length is MAX_NAME_LENGTH
 func (t *Tox) SetName(name string) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -408,6 +422,7 @@ func (t *Tox) SetName(name string) error {
 	return nil
 }
 
+// GetSelfName returns your nickname.
 func (t *Tox) GetSelfName() (string, error) {
 	if t.tox == nil {
 		return "", ErrBadTox
@@ -425,6 +440,7 @@ func (t *Tox) GetSelfName() (string, error) {
 	return name, nil
 }
 
+// GetName returns the name of friendnumber.
 func (t *Tox) GetName(friendnumber int32) (string, error) {
 	if t.tox == nil {
 		return "", ErrBadTox
@@ -442,6 +458,7 @@ func (t *Tox) GetName(friendnumber int32) (string, error) {
 	return name, nil
 }
 
+// GetNameSize returns the length of the name of friendnumber.
 func (t *Tox) GetNameSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -455,6 +472,7 @@ func (t *Tox) GetNameSize(friendnumber int32) (int, error) {
 	return int(ret), nil
 }
 
+// GetSelfNameSize returns the length of your name.
 func (t *Tox) GetSelfNameSize() (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -468,6 +486,8 @@ func (t *Tox) GetSelfNameSize() (int, error) {
 	return int(ret), nil
 }
 
+// SetStatusMessage sets your status message.
+// Maximum status length is MAX_STATUSMESSAGE_LENGTH.
 func (t *Tox) SetStatusMessage(status []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -481,6 +501,7 @@ func (t *Tox) SetStatusMessage(status []byte) error {
 	return nil
 }
 
+// SetUserStatus sets your userstatus.
 func (t *Tox) SetUserStatus(userstatus UserStatus) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -494,6 +515,7 @@ func (t *Tox) SetUserStatus(userstatus UserStatus) error {
 	return nil
 }
 
+// GetStatusMessageSize returns the size of the status of friendnumber.
 func (t *Tox) GetStatusMessageSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -507,6 +529,7 @@ func (t *Tox) GetStatusMessageSize(friendnumber int32) (int, error) {
 	return int(ret), nil
 }
 
+// GetStatusMessageSize returns the size of your status.
 func (t *Tox) GetSelfStatusMessageSize() (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -520,6 +543,7 @@ func (t *Tox) GetSelfStatusMessageSize() (int, error) {
 	return int(ret), nil
 }
 
+// GetStatusMessage returns the status message of friendnumber.
 func (t *Tox) GetStatusMessage(friendnumber int32) ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -538,6 +562,7 @@ func (t *Tox) GetStatusMessage(friendnumber int32) ([]byte, error) {
 	return status, nil
 }
 
+// GetSelfStatusMessage returns your status message.
 func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -556,6 +581,7 @@ func (t *Tox) GetSelfStatusMessage() ([]byte, error) {
 	return status, nil
 }
 
+// GetUserStatus returns the status of friendnumber.
 func (t *Tox) GetUserStatus(friendnumber int32) (UserStatus, error) {
 	if t.tox == nil {
 		return USERSTATUS_INVALID, ErrBadTox
@@ -565,6 +591,7 @@ func (t *Tox) GetUserStatus(friendnumber int32) (UserStatus, error) {
 	return UserStatus(n), nil
 }
 
+// GetSelfUserStatus returns your status.
 func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 	if t.tox == nil {
 		return USERSTATUS_INVALID, ErrBadTox
@@ -574,6 +601,7 @@ func (t *Tox) GetSelfUserStatus() (UserStatus, error) {
 	return UserStatus(n), nil
 }
 
+// GetLastOnline returns the timestamp of the last time friendnumber was seen online.
 func (t *Tox) GetLastOnline(friendnumber int32) (time.Time, error) {
 	if t.tox == nil {
 		return time.Time{}, ErrBadTox
@@ -590,6 +618,7 @@ func (t *Tox) GetLastOnline(friendnumber int32) (time.Time, error) {
 	return last, nil
 }
 
+// SetUserIsTyping sets your typing status to a friend.
 func (t *Tox) SetUserIsTyping(friendnumber int32, typing bool) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -608,6 +637,7 @@ func (t *Tox) SetUserIsTyping(friendnumber int32, typing bool) error {
 	return nil
 }
 
+// GetIsTyping returns true if friendnumber is typing.
 func (t *Tox) GetIsTyping(friendnumber int32) (bool, error) {
 	if t.tox == nil {
 		return false, ErrBadTox
@@ -618,6 +648,7 @@ func (t *Tox) GetIsTyping(friendnumber int32) (bool, error) {
 	return (ret == 1), nil
 }
 
+// SetSendsReceipts sets whether we send read receipts to friendnumber.
 func (t *Tox) SetSendsReceipts(friendnumber int32, send bool) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -632,6 +663,7 @@ func (t *Tox) SetSendsReceipts(friendnumber int32, send bool) error {
 	return nil
 }
 
+// CountFriendList returns the number of friends.
 func (t *Tox) CountFriendlist() (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -641,6 +673,7 @@ func (t *Tox) CountFriendlist() (uint32, error) {
 	return uint32(n), nil
 }
 
+// GetNumOnlineFriends returns the number of online friends.
 func (t *Tox) GetNumOnlineFriends() (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -650,6 +683,7 @@ func (t *Tox) GetNumOnlineFriends() (uint32, error) {
 	return uint32(n), nil
 }
 
+// GetFriendList returns a slice of int32 containing the friendnumbers.
 func (t *Tox) GetFriendlist() ([]int32, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -665,6 +699,7 @@ func (t *Tox) GetFriendlist() ([]int32, error) {
 	return friendlist, nil
 }
 
+// GetNoSpam returns the nospam of your ID.
 func (t *Tox) GetNospam() (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -675,6 +710,7 @@ func (t *Tox) GetNospam() (uint32, error) {
 	return uint32(n), nil
 }
 
+// SetNospam sets the nospam of your ID.
 func (t *Tox) SetNospam(nospam uint32) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -685,6 +721,7 @@ func (t *Tox) SetNospam(nospam uint32) error {
 	return nil
 }
 
+// AddGroupchat creates a new groupchat and returns the groupnumber.
 func (t *Tox) AddGroupchat() (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -699,6 +736,7 @@ func (t *Tox) AddGroupchat() (int, error) {
 	return int(ret), nil
 }
 
+// DelGroupchat deletes a groupchat identified by groupnumber.
 func (t *Tox) DelGroupchat(groupnumber int) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -713,6 +751,7 @@ func (t *Tox) DelGroupchat(groupnumber int) error {
 	return nil
 }
 
+// GroupPeername returns the name of peernumber in groupnumber.
 func (t *Tox) GroupPeername(groupnumber int, peernumber int) ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -730,6 +769,7 @@ func (t *Tox) GroupPeername(groupnumber int, peernumber int) ([]byte, error) {
 	return name, nil
 }
 
+// InviteFriend invites friendnumber to groupnumber.
 func (t *Tox) InviteFriend(friendnumber int32, groupnumber int) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -744,6 +784,7 @@ func (t *Tox) InviteFriend(friendnumber int32, groupnumber int) error {
 	return nil
 }
 
+// JoinGroupchat joins the groupchat after having been invited by friendnumber.
 func (t *Tox) JoinGroupchat(friendnumber int32, friendGroupPublicKey []byte) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -762,6 +803,7 @@ func (t *Tox) JoinGroupchat(friendnumber int32, friendGroupPublicKey []byte) (in
 	return int(ret), nil
 }
 
+// GroupMessageSend sends a message to groupnumber.
 func (t *Tox) GroupMessageSend(groupnumber int, message []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -780,6 +822,7 @@ func (t *Tox) GroupMessageSend(groupnumber int, message []byte) error {
 	return nil
 }
 
+// GroupActionSend sends an action to groupnumber.
 func (t *Tox) GroupActionSend(groupnumber int, action []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -798,6 +841,7 @@ func (t *Tox) GroupActionSend(groupnumber int, action []byte) error {
 	return nil
 }
 
+// GroupNumberPeers returns the number of peers in groupnumber.
 func (t *Tox) GroupNumberPeers(groupnumber int) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -825,6 +869,7 @@ func (t *Tox) GroupNumberPeers(groupnumber int) (int, error) {
  */
 //int tox_group_get_names(Tox *tox, int groupnumber, uint8_t names[][TOX_MAX_NAME_LENGTH], uint16_t lengths[],uint16_t length);
 
+// CountChatlist returns the number of chats.
 func (t *Tox) CountChatlist() (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -834,6 +879,7 @@ func (t *Tox) CountChatlist() (uint32, error) {
 	return uint32(n), nil
 }
 
+// GetChatlist returns a slice of chat IDs.
 func (t *Tox) GetChatlist() ([]int, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -849,6 +895,8 @@ func (t *Tox) GetChatlist() ([]int, error) {
 	return chatlist, nil
 }
 
+// NewFileSender sends a file send request to friendnumber.
+// Returns the filenumber on success.
 func (t *Tox) NewFileSender(friendnumber int32, filesize uint64, filename []byte) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -867,6 +915,7 @@ func (t *Tox) NewFileSender(friendnumber int32, filesize uint64, filename []byte
 	return int(n), nil
 }
 
+// FileSendControl sends a FileControl to friendnumber.
 func (t *Tox) FileSendControl(friendnumber int32, receiving bool, filenumber uint8, messageId FileControl, data []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -899,6 +948,7 @@ func (t *Tox) FileSendControl(friendnumber int32, receiving bool, filenumber uin
 	return nil
 }
 
+// FileSendData sends file data of filenumber to friendnumber.
 func (t *Tox) FileSendData(friendnumber int32, filenumber uint8, data []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -918,6 +968,7 @@ func (t *Tox) FileSendData(friendnumber int32, filenumber uint8, data []byte) er
 	return nil
 }
 
+// FileDataSize returns the recommended/maximum size of the data chunks for FileSendData.
 func (t *Tox) FileDataSize(friendnumber int32) (int, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
@@ -932,6 +983,7 @@ func (t *Tox) FileDataSize(friendnumber int32) (int, error) {
 	return int(n), nil
 }
 
+// FileDataRemaining returns the number of bytes left to be transfered.
 func (t *Tox) FileDataRemaining(friendnumber int32, filenumber uint8, receiving bool) (uint64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -951,6 +1003,7 @@ func (t *Tox) FileDataRemaining(friendnumber int32, filenumber uint8, receiving 
 	return uint64(n), nil
 }
 
+// Size returns the size of the save data returned by Save.
 func (t *Tox) Size() (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
@@ -959,6 +1012,7 @@ func (t *Tox) Size() (uint32, error) {
 	return uint32(C.tox_size(t.tox)), nil
 }
 
+// Save returns a byte slice of the save data.
 func (t *Tox) Save() ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
@@ -971,6 +1025,7 @@ func (t *Tox) Save() ([]byte, error) {
 	return data, nil
 }
 
+// Load loads a save data.
 func (t *Tox) Load(data []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
@@ -985,6 +1040,7 @@ func (t *Tox) Load(data []byte) error {
 	return nil
 }
 
+// CallbackFriendRequest sets the function to be called when receiving a friend request.
 func (t *Tox) CallbackFriendRequest(f OnFriendRequest) {
 	if t.tox != nil {
 		t.onFriendRequest = f
@@ -992,6 +1048,7 @@ func (t *Tox) CallbackFriendRequest(f OnFriendRequest) {
 	}
 }
 
+// CallbackFriendMessage sets the function to be called when receiving a friend message.
 func (t *Tox) CallbackFriendMessage(f OnFriendMessage) {
 	if t.tox != nil {
 		t.onFriendMessage = f
@@ -999,6 +1056,7 @@ func (t *Tox) CallbackFriendMessage(f OnFriendMessage) {
 	}
 }
 
+// CallbackFriendAction sets the function to be called when receiving a friend action.
 func (t *Tox) CallbackFriendAction(f OnFriendAction) {
 	if t.tox != nil {
 		t.onFriendAction = f
@@ -1006,6 +1064,7 @@ func (t *Tox) CallbackFriendAction(f OnFriendAction) {
 	}
 }
 
+// CallbackNameChange sets the callback for name changes.
 func (t *Tox) CallbackNameChange(f OnNameChange) {
 	if t.tox != nil {
 		t.onNameChange = f
@@ -1013,6 +1072,7 @@ func (t *Tox) CallbackNameChange(f OnNameChange) {
 	}
 }
 
+// CallbackStatusMessage sets the callback for status message changes.
 func (t *Tox) CallbackStatusMessage(f OnStatusMessage) {
 	if t.tox != nil {
 		t.onStatusMessage = f
@@ -1020,6 +1080,7 @@ func (t *Tox) CallbackStatusMessage(f OnStatusMessage) {
 	}
 }
 
+// CallbackUserStatus sets the callback for user status changes.
 func (t *Tox) CallbackUserStatus(f OnUserStatus) {
 	if t.tox != nil {
 		t.onUserStatus = f
@@ -1027,6 +1088,7 @@ func (t *Tox) CallbackUserStatus(f OnUserStatus) {
 	}
 }
 
+// CallbackTypingChange sets the callback for typing changes.
 func (t *Tox) CallbackTypingChange(f OnTypingChange) {
 	if t.tox != nil {
 		t.onTypingChange = f
@@ -1034,6 +1096,7 @@ func (t *Tox) CallbackTypingChange(f OnTypingChange) {
 	}
 }
 
+// CallbackReadReceipt sets the function to be called when receiving read receipts.
 func (t *Tox) CallbackReadReceipt(f OnReadReceipt) {
 	if t.tox != nil {
 		t.onReadReceipt = f
@@ -1041,6 +1104,7 @@ func (t *Tox) CallbackReadReceipt(f OnReadReceipt) {
 	}
 }
 
+// CallbackConnectionStatus sets the callback for connection status changes.
 func (t *Tox) CallbackConnectionStatus(f OnConnectionStatus) {
 	if t.tox != nil {
 		t.onConnectionStatus = f
@@ -1048,6 +1112,7 @@ func (t *Tox) CallbackConnectionStatus(f OnConnectionStatus) {
 	}
 }
 
+// CallbackFileSendRequest sets the callback for file send requests.
 func (t *Tox) CallbackFileSendRequest(f OnFileSendRequest) {
 	if t.tox != nil {
 		t.onFileSendRequest = f
@@ -1055,6 +1120,7 @@ func (t *Tox) CallbackFileSendRequest(f OnFileSendRequest) {
 	}
 }
 
+// CallbackFileControl sets the callback for file control requests.
 func (t *Tox) CallbackFileControl(f OnFileControl) {
 	if t.tox != nil {
 		t.onFileControl = f
@@ -1062,6 +1128,7 @@ func (t *Tox) CallbackFileControl(f OnFileControl) {
 	}
 }
 
+// CallbackFileData sets the callback for file data.
 func (t *Tox) CallbackFileData(f OnFileData) {
 	if t.tox != nil {
 		t.onFileData = f
@@ -1069,6 +1136,7 @@ func (t *Tox) CallbackFileData(f OnFileData) {
 	}
 }
 
+// CallbackGroupInvite sets the callback for group invites.
 func (t *Tox) CallbackGroupInvite(f OnGroupInvite) {
 	if t.tox != nil {
 		t.onGroupInvite = f
@@ -1076,6 +1144,7 @@ func (t *Tox) CallbackGroupInvite(f OnGroupInvite) {
 	}
 }
 
+// CallbackGroupMessage sets the callback for group messages.
 func (t *Tox) CallbackGroupMessage(f OnGroupMessage) {
 	if t.tox != nil {
 		t.onGroupMessage = f
@@ -1083,6 +1152,7 @@ func (t *Tox) CallbackGroupMessage(f OnGroupMessage) {
 	}
 }
 
+// CallbackGroupAction sets the callback for group actions.
 func (t *Tox) CallbackGroupAction(f OnGroupAction) {
 	if t.tox != nil {
 		t.onGroupAction = f
@@ -1090,6 +1160,7 @@ func (t *Tox) CallbackGroupAction(f OnGroupAction) {
 	}
 }
 
+// CallbackGroupNamelistChange sets the callback for peer name list changes.
 func (t *Tox) CallbackGroupNamelistChange(f OnGroupNamelistChange) {
 	if t.tox != nil {
 		t.onGroupNamelistChange = f

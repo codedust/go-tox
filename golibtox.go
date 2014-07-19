@@ -16,21 +16,21 @@ static void set_##x(Tox *tox, void *t) { \
 }
 
 void hook_callback_friend_request(Tox*, const uint8_t*, const uint8_t*, uint16_t, void*);
-void hook_callback_friend_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
-void hook_callback_friend_action(Tox*, int32_t, uint8_t*, uint16_t, void*);
-void hook_callback_name_change(Tox*, int32_t, uint8_t*, uint16_t, void*);
-void hook_callback_status_message(Tox*, int32_t, uint8_t*, uint16_t, void*);
+void hook_callback_friend_message(Tox*, int32_t, const uint8_t*, uint16_t, void*);
+void hook_callback_friend_action(Tox*, int32_t, const uint8_t*, uint16_t, void*);
+void hook_callback_name_change(Tox*, int32_t, const uint8_t*, uint16_t, void*);
+void hook_callback_status_message(Tox*, int32_t, const uint8_t*, uint16_t, void*);
 void hook_callback_user_status(Tox*, int32_t, uint8_t, void*);
 void hook_callback_typing_change(Tox*, int32_t, uint8_t, void*);
 void hook_callback_read_receipt(Tox*, int32_t, uint32_t, void*);
 void hook_callback_connection_status(Tox*, int32_t, uint8_t, void*);
-void hook_callback_group_invite(Tox*, int32_t, uint8_t*, void*);
-void hook_callback_group_message(Tox*, int, int, uint8_t*, uint16_t, void*);
-void hook_callback_group_action(Tox*, int, int, uint8_t*, uint16_t, void*);
+void hook_callback_group_invite(Tox*, int32_t, const uint8_t*, void*);
+void hook_callback_group_message(Tox*, int, int, const uint8_t*, uint16_t, void*);
+void hook_callback_group_action(Tox*, int, int, const uint8_t*, uint16_t, void*);
 void hook_callback_group_namelist_change(Tox*, int, int, uint8_t, void*);
-void hook_callback_file_send_request(Tox*, int32_t, uint8_t, uint64_t, uint8_t*, uint16_t, void*);
-void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, uint8_t*, uint16_t, void*);
-void hook_callback_file_data(Tox*, int32_t, uint8_t, uint8_t*, uint16_t, void*);
+void hook_callback_file_send_request(Tox*, int32_t, uint8_t, uint64_t, const uint8_t*, uint16_t, void*);
+void hook_callback_file_control(Tox*, int32_t, uint8_t, uint8_t, uint8_t, const uint8_t*, uint16_t, void*);
+void hook_callback_file_data(Tox*, int32_t, uint8_t, const uint8_t*, uint16_t, void*);
 
 HOOK(callback_friend_request)
 HOOK(callback_friend_message)

@@ -53,7 +53,6 @@ HOOK(callback_file_data)
 import "C"
 
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"sync"
 	"time"
@@ -110,7 +109,7 @@ type OnFileData func(tox *Tox, friendnumber int32, filenumber uint8, data []byte
 
 // Tox is the main struct.
 type Tox struct {
-	tox *C.struct_Tox
+	tox *C.Tox
 	mtx sync.Mutex
 	// Callbacks
 	onFriendRequest       OnFriendRequest
@@ -131,9 +130,63 @@ type Tox struct {
 	onFileData            OnFileData
 }
 
+type Options struct {
+	// If IPv6Enabled is true, both IPv6 and IPv4 connections are allowed.
+	IPv6Enabled bool
+
+	// UDPDisabled disables UDP support and forces TCP (required when using proxies).
+	UDPDisabled bool
+
+	// ProxyEnabled enables proxy support (only SOCKS5 currently supported).
+	ProxyEnabled bool
+	ProxyAddress string
+	ProxyPort    uint16
+}
+
 // New returns a new Tox instance.
-func New() (*Tox, error) {
-	ctox := C.tox_new(ENABLE_IPV6_DEFAULT)
+func New(o *Options) (*Tox, error) {
+	var ctox *C.Tox
+
+	if o != nil {
+		// Let's map o from Options to C.Tox_Options
+		cIPv6Enabled := (C.uint8_t)(0)
+		if o.IPv6Enabled {
+			cIPv6Enabled = (C.uint8_t)(1)
+		}
+		cUDPDisabled := (C.uint8_t)(0)
+		if o.UDPDisabled {
+			cUDPDisabled = (C.uint8_t)(1)
+		}
+		cProxyEnabled := (C.uint8_t)(0)
+		if o.ProxyEnabled {
+			cProxyEnabled = (C.uint8_t)(1)
+		}
+		cProxyPort := (C.uint16_t)(o.ProxyPort)
+
+		// Max ProxyAddress length is 255
+		if len(o.ProxyAddress) > 255 {
+			return nil, ErrArgs
+		}
+		// Ugly hack
+		cProxyAddress := [256]C.char{}
+		for i, c := range o.ProxyAddress {
+			cProxyAddress[i] = C.char(c)
+		}
+		// NULL terminated C.char array required.
+		cProxyAddress[len(o.ProxyAddress)] = 0
+
+		co := &C.Tox_Options{
+			ipv6enabled:   cIPv6Enabled,
+			udp_disabled:  cUDPDisabled,
+			proxy_enabled: cProxyEnabled,
+			proxy_address: cProxyAddress,
+			proxy_port:    cProxyPort}
+
+		ctox = C.tox_new(co)
+	} else {
+		ctox = C.tox_new(nil)
+	}
+
 	if ctox == nil {
 		return nil, ErrInit
 	}
@@ -192,13 +245,7 @@ func (t *Tox) BootstrapFromAddress(address string, port uint16, hexPublicKey str
 		return err
 	}
 
-	// BigEndian int conversion (Network Byte Order)
-	var cport uint16
-	b := make([]byte, 2)
-	binary.BigEndian.PutUint16(b, port)
-	cport = binary.BigEndian.Uint16(b)
-
-	C.tox_bootstrap_from_address(t.tox, caddr, ENABLE_IPV6_DEFAULT, (C.uint16_t)(cport), (*C.uint8_t)(&pubkey[0]))
+	C.tox_bootstrap_from_address(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&pubkey[0]))
 
 	return nil
 }

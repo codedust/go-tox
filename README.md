@@ -1,7 +1,7 @@
 golibtox
 =================
 
-golibtox is a Go wrapper for the [Toxcore](https://github.com/irungentoo/ProjectTox-Core) library.
+golibtox is a Go wrapper for the [Toxcore](https://github.com/irungentoo/toxcore) library.
 
 ## Installation
 ```

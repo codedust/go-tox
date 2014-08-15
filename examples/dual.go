@@ -20,11 +20,11 @@ func main() {
 
 	server := &Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
 
-	alice, err := golibtox.New()
+	alice, err := golibtox.New(nil)
 	if err != nil {
 		panic(err)
 	}
-	bob, err := golibtox.New()
+	bob, err := golibtox.New(nil)
 	if err != nil {
 		panic(err)
 	}

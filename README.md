@@ -80,12 +80,9 @@ tox_new
 tox_new_file_sender
 tox_save
 tox_send_action
-tox_send_action_withid
 tox_send_message
-tox_send_message_withid
 tox_set_name
 tox_set_nospam
-tox_set_sends_receipts
 tox_set_status_message
 tox_set_user_is_typing
 tox_set_user_status

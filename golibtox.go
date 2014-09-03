@@ -406,22 +406,6 @@ func (t *Tox) SendMessage(friendnumber int32, message []byte) (uint32, error) {
 	return uint32(n), nil
 }
 
-// SendMessageWithID sends a message with a given ID to an online friend.
-// Maximum message length is MAX_MESSAGE_LENGTH.
-// Returns the message ID if successful, an error otherwise.
-func (t *Tox) SendMessageWithID(friendnumber int32, id uint32, message []byte) (uint32, error) {
-	if t.tox == nil {
-		return 0, ErrBadTox
-	}
-
-	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendnumber), (C.uint32_t)(id), (*C.uint8_t)(&message[0]), (C.uint32_t)(len(message)))
-	if n == 0 {
-		return 0, ErrFuncFail
-	}
-
-	return uint32(n), nil
-}
-
 // SendAction sends an action to an online friend.
 // Maximum action length is MAX_MESSAGE_LENGTH.
 // Returns the message ID if successful, an error otherwise.
@@ -431,22 +415,6 @@ func (t *Tox) SendAction(friendnumber int32, action []byte) (uint32, error) {
 	}
 
 	n := C.tox_send_action(t.tox, (C.int32_t)(friendnumber), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
-	if n == 0 {
-		return 0, ErrFuncFail
-	}
-
-	return uint32(n), nil
-}
-
-// SendActionActionWithID sends an action with a given ID to an online friend.
-// Maximum action length is MAX_MESSAGE_LENGTH.
-// Returns the message ID if successful, an error otherwise.
-func (t *Tox) SendActionWithID(friendnumber int32, id uint32, action []byte) (uint32, error) {
-	if t.tox == nil {
-		return 0, ErrBadTox
-	}
-
-	n := C.tox_send_message_withid(t.tox, (C.int32_t)(friendnumber), (C.uint32_t)(id), (*C.uint8_t)(&action[0]), (C.uint32_t)(len(action)))
 	if n == 0 {
 		return 0, ErrFuncFail
 	}
@@ -693,21 +661,6 @@ func (t *Tox) GetIsTyping(friendnumber int32) (bool, error) {
 	ret := C.tox_get_is_typing(t.tox, (C.int32_t)(friendnumber))
 
 	return (ret == 1), nil
-}
-
-// SetSendsReceipts sets whether we send read receipts to friendnumber.
-func (t *Tox) SetSendsReceipts(friendnumber int32, send bool) error {
-	if t.tox == nil {
-		return ErrBadTox
-	}
-	csend := 0
-	if send {
-		csend = 1
-	}
-
-	C.tox_set_sends_receipts(t.tox, (C.int32_t)(friendnumber), (C.int)(csend))
-
-	return nil
 }
 
 // CountFriendList returns the number of friends.

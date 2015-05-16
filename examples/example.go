@@ -5,58 +5,66 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/codedust/go-tox"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"time"
-
-	"github.com/organ/golibtox"
 )
 
 type Server struct {
 	Address   string
 	Port      uint16
-	PublicKey string
+	PublicKey []byte
 }
 
 // Map of active file transfers
-var transfers = make(map[uint8]*os.File)
+var transfers = make(map[uint32]*os.File)
+var transfersFilesizes = make(map[uint32]uint64)
 
 func main() {
+	var newToxInstance bool = false
 	var filepath string
 
 	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
 
-	server := &Server{"37.187.46.132", 33445, "A9D98212B3F972BD11DA52BEB0658C326FCCC1BFD49F347F9C2D3D8B61E1B927"}
+	data, err := loadData(filepath)
+	if err != nil {
+		newToxInstance = true
+	}
 
-	o := &golibtox.Options{true, false, false, "127.0.0.1", 5555}
+	o := &gotox.Options{true, true, gotox.PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0}
 
-	tox, err := golibtox.New(o)
+	tox, err := gotox.New(o, data)
 	if err != nil {
 		panic(err)
 	}
 
-	// If no data could be loaded, we should set the name
-	if err := loadData(tox, filepath); err != nil {
-		tox.SetName("GolibtoxBot")
+	if newToxInstance {
+		tox.SelfSetName("gotoxBot")
+		tox.SelfSetStatusMessage("gotox is cool!")
 	}
 
-	tox.SetStatusMessage([]byte("golibtox is cool!"))
-
-	addr, _ := tox.GetAddress()
+	addr, _ := tox.SelfGetAddress()
 	fmt.Println("ID: ", hex.EncodeToString(addr))
 
-	err = tox.SetUserStatus(golibtox.USERSTATUS_NONE)
+	err = tox.SelfSetStatus(gotox.USERSTATUS_NONE)
 
 	// Register our callbacks
 	tox.CallbackFriendRequest(onFriendRequest)
 	tox.CallbackFriendMessage(onFriendMessage)
-	tox.CallbackFileSendRequest(onFileSendRequest)
-	tox.CallbackFileControl(onFileControl)
-	tox.CallbackFileData(onFileData)
+	tox.CallbackFileRecv(onFileRecv)
+	tox.CallbackFileRecvControl(onFileRecvControl)
+	tox.CallbackFileRecvChunk(onFileRecvChunk)
 
-	// Connect to the network
+	/* Connect to the network
+	 * Use more than one node in a real world szenario. This example relies one
+	 * the following node to be up.
+	 */
+	pubkey, _ := hex.DecodeString("04119E835DF3E78BACF0F84235B300546AF8B936F035185E2A8E9E0A67C8924F")
+	server := &Server{"144.76.60.215", 33445, pubkey}
+
 	err = tox.BootstrapFromAddress(server.Address, server.Port, server.PublicKey)
 	if err != nil {
 		panic(err)
@@ -79,73 +87,79 @@ func main() {
 			isRunning = false
 			tox.Kill()
 		case <-ticker.C:
-			tox.Do()
+			tox.Iterate()
 		}
 	}
 }
 
-func onFriendRequest(t *golibtox.Tox, publicKey []byte, data []byte, length uint16) {
+func onFriendRequest(t *gotox.Tox, publicKey []byte, message string) {
 	fmt.Printf("New friend request from %s\n", hex.EncodeToString(publicKey))
-	fmt.Printf("With message: %v\n", string(data))
+	fmt.Printf("With message: %v\n", message)
 	// Auto-accept friend request
-	t.AddFriendNorequest(publicKey)
+	t.FriendAddNorequest(publicKey)
 }
 
-func onFriendMessage(t *golibtox.Tox, friendnumber int32, message []byte, length uint16) {
-	fmt.Printf("New message from %d : %s\n", friendnumber, string(message))
+func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.MessageType, message string) {
+	if messagetype == gotox.MESSAGE_TYPE_NORMAL {
+		fmt.Printf("New message from %d : %s\n", friendnumber, message)
+	} else {
+		fmt.Printf("New action from %d : %s\n", friendnumber, message)
+	}
+
 	// Echo back
-	t.SendMessage(friendnumber, message)
+	t.FriendSendMessage(friendnumber, messagetype, message)
 }
 
-func onFileSendRequest(t *golibtox.Tox, friendnumber int32, filenumber uint8, filesize uint64, filename []byte, filenameLength uint16) {
+func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind uint32, filesize uint64, filename string) {
 	// Accept any file send request
-	t.FileSendControl(friendnumber, true, filenumber, golibtox.FILECONTROL_ACCEPT, nil)
+	t.SendFileControl(friendnumber, true, filenumber, gotox.FILE_CONTROL_RESUME, nil)
 	// Init *File handle
-	f, _ := os.Create("example_" + string(filename))
+	f, _ := os.Create("example_" + filename)
 	// Append f to the map[uint8]*os.File
 	transfers[filenumber] = f
+	transfersFilesizes[filenumber] = filesize
 }
 
-func onFileControl(t *golibtox.Tox, friendnumber int32, sending bool, filenumber uint8, fileControl golibtox.FileControl, data []byte, length uint16) {
+func onFileRecvControl(t *gotox.Tox, friendnumber uint32, filenumber uint32, fileControl gotox.FileControl) {
+	// Do something useful
+}
+
+func onFileRecvChunk(t *gotox.Tox, friendnumber uint32, filenumber uint32, position uint64, data []byte) {
+	// Write data to the hopefully valid *File handle
+	if f, exists := transfers[filenumber]; exists {
+		f.WriteAt(data, (int64)(position))
+	}
+
 	// Finished receiving file
-	if fileControl == golibtox.FILECONTROL_FINISHED {
+	if position == transfersFilesizes[filenumber] {
 		f := transfers[filenumber]
 		f.Sync()
 		f.Close()
 		delete(transfers, filenumber)
 		fmt.Println("Written file", filenumber)
-		t.SendMessage(friendnumber, []byte("Thanks!"))
+		t.FriendSendMessage(friendnumber, gotox.MESSAGE_TYPE_NORMAL, "Thanks!")
 	}
 }
 
-func onFileData(t *golibtox.Tox, friendnumber int32, filenumber uint8, data []byte, length uint16) {
-	// Write data to the hopefully valid *File handle
-	if f, exists := transfers[filenumber]; exists {
-		f.Write(data)
-	}
-}
-
-func loadData(t *golibtox.Tox, filepath string) error {
+func loadData(filepath string) ([]byte, error) {
 	if len(filepath) == 0 {
-		return errors.New("Empty path")
+		return nil, errors.New("Empty path")
 	}
 
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = t.Load(data)
-
-	return err
+	return data, err
 }
 
-func saveData(t *golibtox.Tox, filepath string) error {
+func saveData(t *gotox.Tox, filepath string) error {
 	if len(filepath) == 0 {
 		return errors.New("Empty path")
 	}
 
-	data, err := t.Save()
+	data, err := t.GetSavedata()
 	if err != nil {
 		return err
 	}

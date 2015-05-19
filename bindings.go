@@ -29,7 +29,7 @@ func (t *Tox) SelfGetAddress() ([]byte, error) {
  * message.
  * Returns the friend number on succes, or a FriendAddError on failure.
  */
-func (t *Tox) FriendAdd(address []byte, message string) (int32, error) {
+func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -69,7 +69,7 @@ func (t *Tox) FriendAdd(address []byte, message string) (int32, error) {
 		err = FaerrUnkown
 	}
 
-	return int32(ret), err
+	return uint32(ret), err
 }
 
 /* FriendAddNorequest adds a friend without sending a friend request.

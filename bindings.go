@@ -77,17 +77,17 @@ func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
  */
 func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 	if t.tox == nil {
-		return -1, ErrBadTox
+		return C.UINT32_MAX, ErrBadTox
 	}
 
 	if len(publickey) != PUBLIC_KEY_SIZE {
-		return -1, ErrArgs
+		return C.UINT32_MAX, ErrArgs
 	}
 
 	var friendAddError C.TOX_ERR_FRIEND_ADD
 	ret := C.tox_friend_add_norequest(t.tox, (*C.uint8_t)(&publickey[0]), &friendAddError)
 	if ret == C.UINT32_MAX {
-		return -1, ErrFuncFail
+		return C.UINT32_MAX, ErrFuncFail
 	}
 
 	var err error
@@ -121,11 +121,11 @@ func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 /* FriendGetNumber returns the friend number associated to a given publickey. */
 func (t *Tox) FriendGetNumber(publickey []byte) (uint32, error) {
 	if t.tox == nil {
-		return -1, ErrBadTox
+		return C.UINT32_MAX, ErrBadTox
 	}
 
 	if len(publickey) != PUBLIC_KEY_SIZE {
-		return -1, ErrArgs
+		return C.UINT32_MAX, ErrArgs
 	}
 
 	var friendByPublicKeyError C.TOX_ERR_FRIEND_BY_PUBLIC_KEY
@@ -503,7 +503,7 @@ func (t *Tox) FriendGetLastOnline(friendnumber uint32) (time.Time, error) {
 	var friendGetLastOnlineError C.TOX_ERR_FRIEND_GET_LAST_ONLINE = C.TOX_ERR_FRIEND_GET_LAST_ONLINE_OK
 	ret := C.tox_friend_get_last_online(t.tox, (C.uint32_t)(friendnumber), &friendGetLastOnlineError)
 
-	if int64(ret) == -1 || FriendGetLastOnlineError(friendGetLastOnlineError) != ERR_FRIEND_GET_LAST_ONLINE_OK {
+	if ret == C.INT64_MAX || FriendGetLastOnlineError(friendGetLastOnlineError) != ERR_FRIEND_GET_LAST_ONLINE_OK {
 		return time.Time{}, ErrFuncFail
 	}
 

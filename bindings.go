@@ -75,7 +75,7 @@ func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 /* FriendAddNorequest adds a friend without sending a friend request.
  * Returns the friend number on success.
  */
-func (t *Tox) FriendAddNorequest(publickey []byte) (int32, error) {
+func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
 	}
@@ -115,11 +115,11 @@ func (t *Tox) FriendAddNorequest(publickey []byte) (int32, error) {
 		err = FaerrUnkown
 	}
 
-	return int32(ret), err
+	return uint32(ret), err
 }
 
 /* FriendGetNumber returns the friend number associated to a given publickey. */
-func (t *Tox) FriendGetNumber(publickey []byte) (int32, error) {
+func (t *Tox) FriendGetNumber(publickey []byte) (uint32, error) {
 	if t.tox == nil {
 		return -1, ErrBadTox
 	}
@@ -144,7 +144,7 @@ func (t *Tox) FriendGetNumber(publickey []byte) (int32, error) {
 		err = ErrUnknown
 	}
 
-	return int32(n), err
+	return uint32(n), err
 }
 
 /* FriendGetPublickey returns the publickey associated to that friendnumber. */
@@ -281,14 +281,14 @@ func (t *Tox) SelfSetName(name string) error {
 }
 
 /* SelfGetNameSize returns the length of your name. */
-func (t *Tox) SelfGetNameSize() (int, error) {
+func (t *Tox) SelfGetNameSize() (int64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
 
 	ret := C.tox_self_get_name_size(t.tox)
 
-	return int(ret), nil
+	return int64(ret), nil
 }
 
 /* SelfGetName returns your nickname. */
@@ -312,7 +312,7 @@ func (t *Tox) SelfGetName() (string, error) {
 }
 
 /* FriendGetNameSize returns the length of the name of friendnumber. */
-func (t *Tox) FriendGetNameSize(friendnumber uint32) (int, error) {
+func (t *Tox) FriendGetNameSize(friendnumber uint32) (int64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -324,7 +324,7 @@ func (t *Tox) FriendGetNameSize(friendnumber uint32) (int, error) {
 		return 0, ErrFuncFail
 	}
 
-	return int(ret), nil
+	return int64(ret), nil
 }
 
 /* FriendGetName returns the name of friendnumber. */
@@ -388,14 +388,14 @@ func (t *Tox) SelfSetStatus(userstatus UserStatus) error {
 }
 
 /* SelfGetStatusMessageSize returns the size of your status message. */
-func (t *Tox) SelfGetStatusMessageSize() (int, error) {
+func (t *Tox) SelfGetStatusMessageSize() (int64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
 
 	ret := C.tox_self_get_status_message_size(t.tox)
 
-	return int(ret), nil
+	return int64(ret), nil
 }
 
 /* SelfGetStatusMessage returns your status message. */
@@ -421,7 +421,7 @@ func (t *Tox) SelfGetStatusMessage() (string, error) {
 /* FriendGetStatusMessageSize returns the size of the status of a friend with
  * the given friendnumber.
  */
-func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int, error) {
+func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -433,7 +433,7 @@ func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int, error) {
 		return 0, ErrFuncFail
 	}
 
-	return int(ret), nil
+	return int64(ret), nil
 }
 
 /* FriendGetStatusMessage returns the status message of friend with the given
@@ -503,7 +503,7 @@ func (t *Tox) FriendGetLastOnline(friendnumber uint32) (time.Time, error) {
 	var friendGetLastOnlineError C.TOX_ERR_FRIEND_GET_LAST_ONLINE = C.TOX_ERR_FRIEND_GET_LAST_ONLINE_OK
 	ret := C.tox_friend_get_last_online(t.tox, (C.uint32_t)(friendnumber), &friendGetLastOnlineError)
 
-	if int(ret) == -1 || FriendGetLastOnlineError(friendGetLastOnlineError) != ERR_FRIEND_GET_LAST_ONLINE_OK {
+	if int64(ret) == -1 || FriendGetLastOnlineError(friendGetLastOnlineError) != ERR_FRIEND_GET_LAST_ONLINE_OK {
 		return time.Time{}, ErrFuncFail
 	}
 
@@ -545,13 +545,13 @@ func (t *Tox) FriendGetTyping(friendnumber uint32) (bool, error) {
 }
 
 /* SelfGetFriendlistSize returns the number of friends on the friendlist. */
-func (t *Tox) SelfGetFriendlistSize() (int32, error) {
+func (t *Tox) SelfGetFriendlistSize() (int64, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
 	n := C.tox_self_get_friend_list_size(t.tox)
 
-	return int32(n), nil
+	return int64(n), nil
 }
 
 /* SelfGetFriendlist returns a slice of uint32 containing the friendnumbers. */

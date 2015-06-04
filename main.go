@@ -30,7 +30,7 @@ import "unsafe"
  * amounts of time. Clients should therefore not immediately bootstrap on
  * receiving a disconnect.
  */
-type OnSelfConnectionStatusChanges func(tox *Tox, status ConnectionStatus)
+type OnSelfConnectionStatusChanges func(tox *Tox, status ToxConnection)
 
 /* This event is triggered when a friend changes their name. */
 type OnFriendNameChanges func(tox *Tox, friendnumber uint32, name string)
@@ -39,7 +39,7 @@ type OnFriendNameChanges func(tox *Tox, friendnumber uint32, name string)
 type OnFriendStatusMessageChanges func(tox *Tox, friendnumber uint32, message string)
 
 /* This event is triggered when a friend changes their user status. */
-type OnFriendStatusChanges func(tox *Tox, friendnumber uint32, userstatus UserStatus)
+type OnFriendStatusChanges func(tox *Tox, friendnumber uint32, userstatus ToxUserStatus)
 
 /* This event is triggered when a friend goes offline after having been online,
  * or when a friend goes online.
@@ -47,7 +47,7 @@ type OnFriendStatusChanges func(tox *Tox, friendnumber uint32, userstatus UserSt
  * This callback is not called when adding friends. It is assumed that when
  * adding friends, their connection status is initially offline.
  */
-type OnFriendConnectionStatusChanges func(tox *Tox, friendnumber uint32, connectionstatus ConnectionStatus)
+type OnFriendConnectionStatusChanges func(tox *Tox, friendnumber uint32, connectionstatus ToxConnection)
 
 /* This event is triggered when a friend starts or stops typing. */
 type OnFriendTypingChanges func(tox *Tox, friendnumber uint32, istyping bool)
@@ -61,12 +61,12 @@ type OnFriendReadReceipt func(tox *Tox, friendnumber uint32, messageid uint32)
 type OnFriendRequest func(tox *Tox, publickey []byte, message string)
 
 /* This event is triggered when a message from a friend is received. */
-type OnFriendMessage func(tox *Tox, friendnumber uint32, messagetype MessageType, message string)
+type OnFriendMessage func(tox *Tox, friendnumber uint32, messagetype ToxMessageType, message string)
 
 /* This event is triggered when a file control command is received from a
  * friend.
  */
-type OnFileRecvControl func(tox *Tox, friendnumber uint32, filenumber uint32, filecontrol FileControl)
+type OnFileRecvControl func(tox *Tox, friendnumber uint32, filenumber uint32, filecontrol ToxFileControl)
 
 /* This event is triggered when Core is ready to send more file data. */
 type OnFileChunkRequest func(tox *Tox, friendnumber uint32, filenumber uint32, position uint64, length uint64)
@@ -109,13 +109,12 @@ type Tox struct {
 }
 
 type Options struct {
-	/**
+	/* The type of socket to create.
 	 * If IPv6Enabled is true, both IPv6 and IPv4 connections are allowed.
 	 */
 	IPv6Enabled bool
 
-	/**
-	 * Enable the use of UDP communication when available.
+	/* Enable the use of UDP communication when available.
 	 *
 	 * Setting this to false will force Tox to use TCP only. Communications will
 	 * need to be relayed through a TCP relay node, potentially slowing them down.
@@ -124,7 +123,7 @@ type Options struct {
 	UDPEnabled bool
 
 	/* The type of the proxy (PROXY_TYPE_NONE, PROXY_TYPE_HTTP or PROXY_TYPE_SOCKS5). */
-	TCPProxyType ProxyType
+	ProxyType ToxProxyType
 
 	/* The IP address or DNS name of the proxy to be used. */
 	ProxyHost string
@@ -137,58 +136,77 @@ type Options struct {
 
 	/* The end port of the inclusive port range to attempt to use. */
 	EndPort uint16
+
+	/* The port to use for the TCP server. If 0, the tcp server is disabled. */
+	TcpPort uint16
+
+	/* The type of savedata to load from. */
+	SaveDataType ToxSaveDataType
+
+	/* The savedata. */
+	SaveData []byte
 }
 
 // New returns a new Tox instance.
-func New(o *Options, data []byte) (*Tox, error) {
+func New(options *Options) (*Tox, error) {
 	var ctox *C.Tox
-	var cToxNewError C.TOX_ERR_NEW
+	var toxErrNew C.TOX_ERR_NEW
 
-	var cData *C.uint8_t
-	if len(data) > 0 {
-		cData = (*C.uint8_t)(&data[0])
-	} else {
-		cData = nil
-	}
+	if options != nil {
+		// Let's map options from Options to C.Tox_Options
+		var cSaveData *C.uint8_t
+		if len(options.SaveData) > 0 {
+			cSaveData = (*C.uint8_t)(&options.SaveData[0])
+		} else {
+			cSaveData = nil
+		}
+		cIPv6Enabled := (C._Bool)(options.IPv6Enabled)
+		cUDPEnabled := (C._Bool)(options.UDPEnabled)
 
-	if o != nil {
-		// Let's map o from Options to C.Tox_Options
-		cIPv6Enabled := (C._Bool)(o.IPv6Enabled)
-		cUDPEnabled := (C._Bool)(o.UDPEnabled)
-
-		var cProxyType C.TOX_PROXY_TYPE
-		if o.TCPProxyType == PROXY_TYPE_HTTP {
+		var cProxyType C.TOX_PROXY_TYPE = C.TOX_PROXY_TYPE_NONE
+		if options.ProxyType == TOX_PROXY_TYPE_HTTP {
 			cProxyType = C.TOX_PROXY_TYPE_HTTP
-		} else if o.TCPProxyType == PROXY_TYPE_SOCKS5 {
+		} else if options.ProxyType == TOX_PROXY_TYPE_SOCKS5 {
 			cProxyType = C.TOX_PROXY_TYPE_SOCKS5
 		}
 
+		var cSaveDataType C.TOX_SAVEDATA_TYPE = C.TOX_SAVEDATA_TYPE_NONE
+		if options.SaveDataType == TOX_SAVEDATA_TYPE_TOX_SAVE {
+			cSaveDataType = C.TOX_SAVEDATA_TYPE_TOX_SAVE
+		} else if options.SaveDataType == TOX_SAVEDATA_TYPE_SECRET_KEY {
+			cSaveDataType = C.TOX_SAVEDATA_TYPE_SECRET_KEY
+		}
+
 		// max ProxyHost length is 255
-		if len(o.ProxyHost) > 255 {
+		if len(options.ProxyHost) > 255 {
 			return nil, ErrArgs
 		}
-		cProxyHost := C.CString(o.ProxyHost)
+		cProxyHost := C.CString(options.ProxyHost)
 		defer C.free(unsafe.Pointer(cProxyHost))
 
-		cProxyPort := (C.uint16_t)(o.ProxyPort)
-		cStartPort := (C.uint16_t)(o.StartPort)
-		cEndPort := (C.uint16_t)(o.EndPort)
+		cProxyPort := (C.uint16_t)(options.ProxyPort)
+		cStartPort := (C.uint16_t)(options.StartPort)
+		cEndPort := (C.uint16_t)(options.EndPort)
 
-		co := &C.struct_Tox_Options{
-			ipv6_enabled: cIPv6Enabled,
-			udp_enabled:  cUDPEnabled,
-			proxy_type:   cProxyType,
-			proxy_host:   cProxyHost,
-			proxy_port:   cProxyPort,
-			start_port:   cStartPort,
-			end_port:     cEndPort}
+		cOptions := &C.struct_Tox_Options{
+			ipv6_enabled:    cIPv6Enabled,
+			udp_enabled:     cUDPEnabled,
+			proxy_type:      cProxyType,
+			proxy_host:      cProxyHost,
+			proxy_port:      cProxyPort,
+			start_port:      cStartPort,
+			end_port:        cEndPort,
+			tcp_port:        0,
+			savedata_type:   cSaveDataType,
+			savedata_data:   cSaveData,
+			savedata_length: (C.size_t)(len(options.SaveData))}
 
-		ctox = C.tox_new(co, cData, (C.size_t)(len(data)), &cToxNewError)
+		ctox = C.tox_new(cOptions, &toxErrNew)
 	} else {
-		ctox = C.tox_new(nil, cData, (C.size_t)(len(data)), &cToxNewError)
+		ctox = C.tox_new(nil, &toxErrNew)
 	}
 
-	if ctox == nil || ToxNewError(cToxNewError) != ERR_NEW_OK {
+	if ctox == nil || ToxErrNew(toxErrNew) != TOX_ERR_NEW_OK {
 		return nil, ErrInit
 	}
 
@@ -268,19 +286,19 @@ func (t *Tox) BootstrapFromAddress(address string, port uint16, publickey []byte
 		return ErrBadTox
 	}
 
-	if len(publickey) != PUBLIC_KEY_SIZE {
+	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
 		return ErrArgs
 	}
 
 	caddr := C.CString(address)
 	defer C.free(unsafe.Pointer(caddr))
 
-	var cBootstrapError C.TOX_ERR_BOOTSTRAP
-	C.tox_bootstrap(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&publickey[0]), &cBootstrapError)
+	var toxErrBootstrap C.TOX_ERR_BOOTSTRAP
+	C.tox_bootstrap(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&publickey[0]), &toxErrBootstrap)
 
 	var bootstrapError error
 
-	switch BootstrapError(cBootstrapError) {
+	switch ToxErrBootstrap(toxErrBootstrap) {
 	case TOX_ERR_BOOTSTRAP_OK:
 		bootstrapError = nil
 	case TOX_ERR_BOOTSTRAP_NULL:

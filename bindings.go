@@ -5,12 +5,12 @@ import "C"
 import "time"
 
 /* SelfGetConnectionStatus returns true if Tox is connected to the DHT. */
-func (t *Tox) SelfGetConnectionStatus() (ConnectionStatus, error) {
+func (t *Tox) SelfGetConnectionStatus() (ToxConnection, error) {
 	if t.tox == nil {
-		return CONNECTION_NONE, ErrBadTox
+		return TOX_CONNECTION_NONE, ErrBadTox
 	}
 
-	return ConnectionStatus(C.tox_self_get_connection_status(t.tox)), nil
+	return ToxConnection(C.tox_self_get_connection_status(t.tox)), nil
 }
 
 /* SelfGetAddress returns the public address to give to others. */
@@ -19,7 +19,7 @@ func (t *Tox) SelfGetAddress() ([]byte, error) {
 		return nil, ErrBadTox
 	}
 
-	address := make([]byte, ADDRESS_SIZE)
+	address := make([]byte, TOX_ADDRESS_SIZE)
 	C.tox_self_get_address(t.tox, (*C.uint8_t)(&address[0]))
 
 	return address, nil
@@ -27,46 +27,46 @@ func (t *Tox) SelfGetAddress() ([]byte, error) {
 
 /* FriendAdd adds a friend by sending a friend request containing the given
  * message.
- * Returns the friend number on succes, or a FriendAddError on failure.
+ * Returns the friend number on succes, or a ToxErrFriendAdd on failure.
  */
 func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
 
-	if len(address) != ADDRESS_SIZE || len(message) == 0 {
+	if len(address) != TOX_ADDRESS_SIZE || len(message) == 0 {
 		return 0, ErrArgs
 	}
 
 	caddr := (*C.uint8_t)(&address[0])
 	cmessage := (*C.uint8_t)(&[]byte(message)[0])
 
-	var friendAddError C.TOX_ERR_FRIEND_ADD
-	ret := C.tox_friend_add(t.tox, caddr, cmessage, (C.size_t)(len(message)), &friendAddError)
+	var toxErrFriendAdd C.TOX_ERR_FRIEND_ADD
+	ret := C.tox_friend_add(t.tox, caddr, cmessage, (C.size_t)(len(message)), &toxErrFriendAdd)
 
 	var err error
 
-	switch FriendAddError(friendAddError) {
-	case ERR_FRIEND_ADD_OK:
+	switch ToxErrFriendAdd(toxErrFriendAdd) {
+	case TOX_ERR_FRIEND_ADD_OK:
 		err = nil
-	case ERR_FRIEND_ADD_NULL:
-		err = FaerrNull
-	case ERR_FRIEND_ADD_TOO_LONG:
-		err = FaerrTooLong
-	case ERR_FRIEND_ADD_NO_MESSAGE:
-		err = FaerrNoMessage
-	case ERR_FRIEND_ADD_OWN_KEY:
-		err = FaerrOwnKey
-	case ERR_FRIEND_ADD_ALREADY_SENT:
-		err = FaerrAlreadySent
-	case ERR_FRIEND_ADD_BAD_CHECKSUM:
-		err = FaerrBadChecksum
-	case ERR_FRIEND_ADD_SET_NEW_NOSPAM:
-		err = FaerrSetNewNospam
-	case ERR_FRIEND_ADD_MALLOC:
-		err = FaerrNoMem
+	case TOX_ERR_FRIEND_ADD_NULL:
+		err = ErrFriendAddNull
+	case TOX_ERR_FRIEND_ADD_TOO_LONG:
+		err = ErrFriendAddTooLong
+	case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+		err = ErrFriendAddNoMessage
+	case TOX_ERR_FRIEND_ADD_OWN_KEY:
+		err = ErrFriendAddOwnKey
+	case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+		err = ErrFriendAddAlreadySent
+	case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+		err = ErrFriendAddBadChecksum
+	case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
+		err = ErrFriendAddSetNewNospam
+	case TOX_ERR_FRIEND_ADD_MALLOC:
+		err = ErrFriendAddNoMem
 	default:
-		err = FaerrUnkown
+		err = ErrFriendAddUnkown
 	}
 
 	return uint32(ret), err
@@ -80,39 +80,39 @@ func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 		return C.UINT32_MAX, ErrBadTox
 	}
 
-	if len(publickey) != PUBLIC_KEY_SIZE {
+	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
 		return C.UINT32_MAX, ErrArgs
 	}
 
-	var friendAddError C.TOX_ERR_FRIEND_ADD
-	ret := C.tox_friend_add_norequest(t.tox, (*C.uint8_t)(&publickey[0]), &friendAddError)
+	var toxErrFriendAdd C.TOX_ERR_FRIEND_ADD
+	ret := C.tox_friend_add_norequest(t.tox, (*C.uint8_t)(&publickey[0]), &toxErrFriendAdd)
 	if ret == C.UINT32_MAX {
 		return C.UINT32_MAX, ErrFuncFail
 	}
 
 	var err error
 
-	switch FriendAddError(friendAddError) {
-	case ERR_FRIEND_ADD_OK:
+	switch ToxErrFriendAdd(toxErrFriendAdd) {
+	case TOX_ERR_FRIEND_ADD_OK:
 		err = nil
-	case ERR_FRIEND_ADD_NULL:
-		err = FaerrNull
-	case ERR_FRIEND_ADD_TOO_LONG:
-		err = FaerrTooLong
-	case ERR_FRIEND_ADD_NO_MESSAGE:
-		err = FaerrNoMessage
-	case ERR_FRIEND_ADD_OWN_KEY:
-		err = FaerrOwnKey
-	case ERR_FRIEND_ADD_ALREADY_SENT:
-		err = FaerrAlreadySent
-	case ERR_FRIEND_ADD_BAD_CHECKSUM:
-		err = FaerrBadChecksum
-	case ERR_FRIEND_ADD_SET_NEW_NOSPAM:
-		err = FaerrSetNewNospam
-	case ERR_FRIEND_ADD_MALLOC:
-		err = FaerrNoMem
+	case TOX_ERR_FRIEND_ADD_NULL:
+		err = ErrFriendAddNull
+	case TOX_ERR_FRIEND_ADD_TOO_LONG:
+		err = ErrFriendAddTooLong
+	case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
+		err = ErrFriendAddNoMessage
+	case TOX_ERR_FRIEND_ADD_OWN_KEY:
+		err = ErrFriendAddOwnKey
+	case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
+		err = ErrFriendAddAlreadySent
+	case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
+		err = ErrFriendAddBadChecksum
+	case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
+		err = ErrFriendAddSetNewNospam
+	case TOX_ERR_FRIEND_ADD_MALLOC:
+		err = ErrFriendAddNoMem
 	default:
-		err = FaerrUnkown
+		err = ErrFriendAddUnkown
 	}
 
 	return uint32(ret), err
@@ -124,16 +124,16 @@ func (t *Tox) FriendGetNumber(publickey []byte) (uint32, error) {
 		return C.UINT32_MAX, ErrBadTox
 	}
 
-	if len(publickey) != PUBLIC_KEY_SIZE {
+	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
 		return C.UINT32_MAX, ErrArgs
 	}
 
-	var friendByPublicKeyError C.TOX_ERR_FRIEND_BY_PUBLIC_KEY
-	n := C.tox_friend_by_public_key(t.tox, (*C.uint8_t)(&publickey[0]), &friendByPublicKeyError)
+	var toxErrFriendByPublicKey C.TOX_ERR_FRIEND_BY_PUBLIC_KEY
+	n := C.tox_friend_by_public_key(t.tox, (*C.uint8_t)(&publickey[0]), &toxErrFriendByPublicKey)
 
 	var err error
 
-	switch FriendByPublicKeyError(friendByPublicKeyError) {
+	switch ToxErrFriendByPublicKey(toxErrFriendByPublicKey) {
 	case TOX_ERR_FRIEND_BY_PUBLIC_KEY_OK:
 		err = nil
 	case TOX_ERR_FRIEND_BY_PUBLIC_KEY_NULL:
@@ -152,15 +152,15 @@ func (t *Tox) FriendGetPublickey(friendnumber uint32) ([]byte, error) {
 	if t.tox == nil {
 		return nil, ErrBadTox
 	}
-	publickey := make([]byte, PUBLIC_KEY_SIZE)
-	var friendGetPublicKeyError C.TOX_ERR_FRIEND_GET_PUBLIC_KEY = C.TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK
-	ret := C.tox_friend_get_public_key(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&publickey[0]), &friendGetPublicKeyError)
+	publickey := make([]byte, TOX_PUBLIC_KEY_SIZE)
+	var toxErrFriendGetPublicKey C.TOX_ERR_FRIEND_GET_PUBLIC_KEY = C.TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK
+	ret := C.tox_friend_get_public_key(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&publickey[0]), &toxErrFriendGetPublicKey)
 
 	var err error
-	switch FriendGetPublicKeyError(friendGetPublicKeyError) {
-	case ERR_FRIEND_GET_PUBLIC_KEY_OK:
+	switch ToxErrFriendGetPublicKey(toxErrFriendGetPublicKey) {
+	case TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK:
 		err = nil
-	case ERR_FRIEND_GET_PUBLIC_KEY_FRIEND_NOT_FOUND:
+	case TOX_ERR_FRIEND_GET_PUBLIC_KEY_FRIEND_NOT_FOUND:
 		err = ErrFuncFail
 	default:
 		err = ErrUnknown
@@ -179,14 +179,14 @@ func (t *Tox) FriendDelete(friendnumber uint32) error {
 		return ErrBadTox
 	}
 
-	var friendDeleteError C.TOX_ERR_FRIEND_DELETE = C.TOX_ERR_FRIEND_DELETE_OK
-	ret := C.tox_friend_delete(t.tox, (C.uint32_t)(friendnumber), &friendDeleteError)
+	var toxErrFriendDelete C.TOX_ERR_FRIEND_DELETE = C.TOX_ERR_FRIEND_DELETE_OK
+	ret := C.tox_friend_delete(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendDelete)
 
 	var err error
-	switch FriendDeleteError(friendDeleteError) {
-	case ERR_FRIEND_DELETE_OK:
+	switch ToxErrFriendDelete(toxErrFriendDelete) {
+	case TOX_ERR_FRIEND_DELETE_OK:
 		err = nil
-	case ERR_FRIEND_DELETE_FRIEND_NOT_FOUND:
+	case TOX_ERR_FRIEND_DELETE_FRIEND_NOT_FOUND:
 		err = ErrFuncFail
 	default:
 		err = ErrUnknown
@@ -200,19 +200,19 @@ func (t *Tox) FriendDelete(friendnumber uint32) error {
 }
 
 /* FriendGetConnectionStatus returns true if the friend is connected. */
-func (t *Tox) FriendGetConnectionStatus(friendnumber uint32) (ConnectionStatus, error) {
+func (t *Tox) FriendGetConnectionStatus(friendnumber uint32) (ToxConnection, error) {
 	if t.tox == nil {
-		return CONNECTION_NONE, ErrBadTox
+		return TOX_CONNECTION_NONE, ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-	status := C.tox_friend_get_connection_status(t.tox, (C.uint32_t)(friendnumber), &friendQueryError)
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	status := C.tox_friend_get_connection_status(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendQuery)
 
-	if FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
-		return CONNECTION_NONE, ErrFuncFail
+	if ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
+		return TOX_CONNECTION_NONE, ErrFuncFail
 	}
 
-	return ConnectionStatus(status), nil
+	return ToxConnection(status), nil
 }
 
 /* FriendExists returns true if a friend exists with given friendnumber. */
@@ -231,7 +231,7 @@ func (t *Tox) FriendExists(friendnumber uint32) (bool, error) {
  * messagetype is the type of the message (normal, action, ...).
  * Returns the message ID if successful, an error otherwise.
  */
-func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype MessageType, message string) (uint32, error) {
+func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype ToxMessageType, message string) (uint32, error) {
 	if t.tox == nil {
 		return 0, ErrBadTox
 	}
@@ -241,7 +241,7 @@ func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype MessageType, me
 	}
 
 	var cMessageType C.TOX_MESSAGE_TYPE
-	if messagetype == MESSAGE_TYPE_ACTION {
+	if messagetype == TOX_MESSAGE_TYPE_ACTION {
 		cMessageType = C.TOX_MESSAGE_TYPE_ACTION
 	} else {
 		cMessageType = C.TOX_MESSAGE_TYPE_NORMAL
@@ -249,10 +249,10 @@ func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype MessageType, me
 
 	cMessage := (*C.uint8_t)(&[]byte(message)[0])
 
-	var friendSendMessageError C.TOX_ERR_FRIEND_SEND_MESSAGE = C.TOX_ERR_FRIEND_SEND_MESSAGE_OK
-	n := C.tox_friend_send_message(t.tox, (C.uint32_t)(friendnumber), cMessageType, cMessage, (C.size_t)(len(message)), &friendSendMessageError)
+	var toxFriendSendMessageError C.TOX_ERR_FRIEND_SEND_MESSAGE = C.TOX_ERR_FRIEND_SEND_MESSAGE_OK
+	n := C.tox_friend_send_message(t.tox, (C.uint32_t)(friendnumber), cMessageType, cMessage, (C.size_t)(len(message)), &toxFriendSendMessageError)
 
-	if FriendSendMessageError(friendSendMessageError) != ERR_FRIEND_SEND_MESSAGE_OK {
+	if ToxErrFriendSendMessage(toxFriendSendMessageError) != TOX_ERR_FRIEND_SEND_MESSAGE_OK {
 		return 0, ErrFuncFail
 	}
 
@@ -273,7 +273,7 @@ func (t *Tox) SelfSetName(name string) error {
 
 	var setInfoError C.TOX_ERR_SET_INFO = C.TOX_ERR_SET_INFO_OK
 	success := C.tox_self_set_name(t.tox, cName, (C.size_t)(len(name)), &setInfoError)
-	if !success || SetInfoError(setInfoError) != ERR_SET_INFO_OK {
+	if !success || ToxErrSetInfo(setInfoError) != TOX_ERR_SET_INFO_OK {
 		return ErrFuncFail
 	}
 
@@ -317,10 +317,10 @@ func (t *Tox) FriendGetNameSize(friendnumber uint32) (int64, error) {
 		return 0, ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-	ret := C.tox_friend_get_name_size(t.tox, (C.uint32_t)(friendnumber), &friendQueryError)
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	ret := C.tox_friend_get_name_size(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendQuery)
 
-	if FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
+	if ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
 		return 0, ErrFuncFail
 	}
 
@@ -341,10 +341,10 @@ func (t *Tox) FriendGetName(friendnumber uint32) (string, error) {
 	name := make([]byte, length)
 
 	if length > 0 {
-		var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-		success := C.tox_friend_get_name(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&name[0]), &friendQueryError)
+		var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+		success := C.tox_friend_get_name(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&name[0]), &toxErrFriendQuery)
 
-		if success != true || FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
+		if success != true || ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
 			return "", ErrFuncFail
 		}
 	}
@@ -369,7 +369,7 @@ func (t *Tox) SelfSetStatusMessage(status string) error {
 	var setInfoError C.TOX_ERR_SET_INFO = C.TOX_ERR_SET_INFO_OK
 	C.tox_self_set_status_message(t.tox, cStatus, (C.size_t)(len(status)), &setInfoError)
 
-	if SetInfoError(setInfoError) != ERR_SET_INFO_OK {
+	if ToxErrSetInfo(setInfoError) != TOX_ERR_SET_INFO_OK {
 		return ErrFuncFail
 	}
 
@@ -377,7 +377,7 @@ func (t *Tox) SelfSetStatusMessage(status string) error {
 }
 
 /* SelfSetStatus sets your userstatus. */
-func (t *Tox) SelfSetStatus(userstatus UserStatus) error {
+func (t *Tox) SelfSetStatus(userstatus ToxUserStatus) error {
 	if t.tox == nil {
 		return ErrBadTox
 	}
@@ -426,10 +426,10 @@ func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int64, error) {
 		return 0, ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-	ret := C.tox_friend_get_status_message_size(t.tox, (C.uint32_t)(friendnumber), &friendQueryError)
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	ret := C.tox_friend_get_status_message_size(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendQuery)
 
-	if FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
+	if ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
 		return 0, ErrFuncFail
 	}
 
@@ -444,7 +444,7 @@ func (t *Tox) FriendGetStatusMessage(friendnumber uint32) (string, error) {
 		return "", ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
 
 	size, error := t.FriendGetStatusMessageSize(friendnumber)
 	if error != nil {
@@ -454,10 +454,10 @@ func (t *Tox) FriendGetStatusMessage(friendnumber uint32) (string, error) {
 	statusMessage := make([]byte, size)
 
 	if size > 0 {
-		friendQueryError = C.TOX_ERR_FRIEND_QUERY_OK
-		n := C.tox_friend_get_status_message(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&statusMessage[0]), &friendQueryError)
+		toxErrFriendQuery = C.TOX_ERR_FRIEND_QUERY_OK
+		n := C.tox_friend_get_status_message(t.tox, (C.uint32_t)(friendnumber), (*C.uint8_t)(&statusMessage[0]), &toxErrFriendQuery)
 
-		if n != true || FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
+		if n != true || ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
 			return "", ErrFuncFail
 		}
 	}
@@ -466,30 +466,30 @@ func (t *Tox) FriendGetStatusMessage(friendnumber uint32) (string, error) {
 }
 
 /* FriendGetStatus returns the status of friendnumber. */
-func (t *Tox) FriendGetStatus(friendnumber uint32) (UserStatus, error) {
+func (t *Tox) FriendGetStatus(friendnumber uint32) (ToxUserStatus, error) {
 	if t.tox == nil {
-		return USERSTATUS_NONE, ErrBadTox
+		return TOX_USERSTATUS_NONE, ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-	status := C.tox_friend_get_status(t.tox, (C.uint32_t)(friendnumber), &friendQueryError)
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	status := C.tox_friend_get_status(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendQuery)
 
-	if FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
-		return USERSTATUS_NONE, ErrFuncFail
+	if ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
+		return TOX_USERSTATUS_NONE, ErrFuncFail
 	}
 
-	return UserStatus(status), nil
+	return ToxUserStatus(status), nil
 }
 
 /* SelfGetStatus returns your status. */
-func (t *Tox) SelfGetStatus() (UserStatus, error) {
+func (t *Tox) SelfGetStatus() (ToxUserStatus, error) {
 	if t.tox == nil {
-		return USERSTATUS_NONE, ErrBadTox
+		return TOX_USERSTATUS_NONE, ErrBadTox
 	}
 
 	n := C.tox_self_get_status(t.tox)
 
-	return UserStatus(n), nil
+	return ToxUserStatus(n), nil
 }
 
 /* FriendGetLastOnline returns the timestamp of the last time the friend with
@@ -500,10 +500,10 @@ func (t *Tox) FriendGetLastOnline(friendnumber uint32) (time.Time, error) {
 		return time.Time{}, ErrBadTox
 	}
 
-	var friendGetLastOnlineError C.TOX_ERR_FRIEND_GET_LAST_ONLINE = C.TOX_ERR_FRIEND_GET_LAST_ONLINE_OK
-	ret := C.tox_friend_get_last_online(t.tox, (C.uint32_t)(friendnumber), &friendGetLastOnlineError)
+	var toxErrFriendGetLastOnline C.TOX_ERR_FRIEND_GET_LAST_ONLINE = C.TOX_ERR_FRIEND_GET_LAST_ONLINE_OK
+	ret := C.tox_friend_get_last_online(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendGetLastOnline)
 
-	if ret == C.INT64_MAX || FriendGetLastOnlineError(friendGetLastOnlineError) != ERR_FRIEND_GET_LAST_ONLINE_OK {
+	if ret == C.INT64_MAX || ToxErrFriendGetLastOnline(toxErrFriendGetLastOnline) != TOX_ERR_FRIEND_GET_LAST_ONLINE_OK {
 		return time.Time{}, ErrFuncFail
 	}
 
@@ -518,10 +518,10 @@ func (t *Tox) SelfSetTyping(friendnumber uint32, typing bool) error {
 		return ErrBadTox
 	}
 
-	var setTypingError C.TOX_ERR_SET_TYPING = C.TOX_ERR_SET_TYPING_OK
-	success := C.tox_self_set_typing(t.tox, (C.uint32_t)(friendnumber), (C._Bool)(typing), &setTypingError)
+	var toxErrSetTyping C.TOX_ERR_SET_TYPING = C.TOX_ERR_SET_TYPING_OK
+	success := C.tox_self_set_typing(t.tox, (C.uint32_t)(friendnumber), (C._Bool)(typing), &toxErrSetTyping)
 
-	if !success || SetTypingError(setTypingError) != ERR_SET_TYPING_OK {
+	if !success || ToxErrSetTyping(toxErrSetTyping) != TOX_ERR_SET_TYPING_OK {
 		return ErrFuncFail
 	}
 
@@ -534,10 +534,10 @@ func (t *Tox) FriendGetTyping(friendnumber uint32) (bool, error) {
 		return false, ErrBadTox
 	}
 
-	var friendQueryError C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
-	istyping := C.tox_friend_get_typing(t.tox, (C.uint32_t)(friendnumber), &friendQueryError)
+	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
+	istyping := C.tox_friend_get_typing(t.tox, (C.uint32_t)(friendnumber), &toxErrFriendQuery)
 
-	if FriendQueryError(friendQueryError) != ERR_FRIEND_QUERY_OK {
+	if ToxErrFriendQuery(toxErrFriendQuery) != TOX_ERR_FRIEND_QUERY_OK {
 		return false, ErrFuncFail
 	}
 
@@ -595,25 +595,25 @@ func (t *Tox) SelfSetNospam(nospam uint32) error {
 }
 
 /* SendFileControl sends a FileControl to a friend with the given friendnumber. */
-func (t *Tox) SendFileControl(friendnumber uint32, receiving bool, filenumber uint32, fileControl FileControl, data []byte) error {
+func (t *Tox) SendFileControl(friendnumber uint32, receiving bool, filenumber uint32, fileControl ToxFileControl, data []byte) error {
 	if t.tox == nil {
 		return ErrBadTox
 	}
 
 	var cFileControl C.TOX_FILE_CONTROL
-	switch FileControl(fileControl) {
-	case FILE_CONTROL_RESUME:
+	switch ToxFileControl(fileControl) {
+	case TOX_FILE_CONTROL_RESUME:
 		cFileControl = C.TOX_FILE_CONTROL_RESUME
-	case FILE_CONTROL_PAUSE:
+	case TOX_FILE_CONTROL_PAUSE:
 		cFileControl = C.TOX_FILE_CONTROL_PAUSE
-	case FILE_CONTROL_CANCEL:
+	case TOX_FILE_CONTROL_CANCEL:
 		cFileControl = C.TOX_FILE_CONTROL_CANCEL
 	}
 
-	var fileControlError C.TOX_ERR_FILE_CONTROL
-	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &fileControlError)
+	var toxErrfileControl C.TOX_ERR_FILE_CONTROL
+	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &toxErrfileControl)
 
-	if !success || FileControlError(fileControlError) != ERR_FILE_CONTROL_OK {
+	if !success || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
 		return ErrFuncFail
 	}
 

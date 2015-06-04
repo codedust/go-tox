@@ -6,7 +6,7 @@ import "unsafe"
 
 //export hook_callback_self_connection_status
 func hook_callback_self_connection_status(t unsafe.Pointer, status C.enum_TOX_CONNECTION, tox unsafe.Pointer) {
-	(*Tox)(tox).onSelfConnectionStatusChanges((*Tox)(tox), ConnectionStatus(status))
+	(*Tox)(tox).onSelfConnectionStatusChanges((*Tox)(tox), ToxConnection(status))
 }
 
 //export hook_callback_friend_name
@@ -21,12 +21,12 @@ func hook_callback_friend_status_message(t unsafe.Pointer, friendnumber C.uint32
 
 //export hook_callback_friend_status
 func hook_callback_friend_status(t unsafe.Pointer, friendnumber C.uint32_t, status C.enum_TOX_USER_STATUS, tox unsafe.Pointer) {
-	(*Tox)(tox).onFriendStatusChanges((*Tox)(tox), uint32(friendnumber), UserStatus(status))
+	(*Tox)(tox).onFriendStatusChanges((*Tox)(tox), uint32(friendnumber), ToxUserStatus(status))
 }
 
 //export hook_callback_friend_connection_status
 func hook_callback_friend_connection_status(t unsafe.Pointer, friendnumber C.uint32_t, status C.enum_TOX_CONNECTION, tox unsafe.Pointer) {
-	(*Tox)(tox).onFriendConnectionStatusChanges((*Tox)(tox), uint32(friendnumber), ConnectionStatus(status))
+	(*Tox)(tox).onFriendConnectionStatusChanges((*Tox)(tox), uint32(friendnumber), ToxConnection(status))
 }
 
 //export hook_callback_friend_typing
@@ -41,17 +41,17 @@ func hook_callback_friend_read_receipt(t unsafe.Pointer, friendnumber C.uint32_t
 
 //export hook_callback_friend_request
 func hook_callback_friend_request(t unsafe.Pointer, publicKey *C.uint8_t, message *C.uint8_t, length C.size_t, tox unsafe.Pointer) {
-	(*Tox)(tox).onFriendRequest((*Tox)(tox), C.GoBytes((unsafe.Pointer)(publicKey), PUBLIC_KEY_SIZE), string(C.GoBytes((unsafe.Pointer)(message), (C.int)(length))))
+	(*Tox)(tox).onFriendRequest((*Tox)(tox), C.GoBytes((unsafe.Pointer)(publicKey), TOX_PUBLIC_KEY_SIZE), string(C.GoBytes((unsafe.Pointer)(message), (C.int)(length))))
 }
 
 //export hook_callback_friend_message
 func hook_callback_friend_message(t unsafe.Pointer, friendnumber C.uint32_t, messagetype C.enum_TOX_MESSAGE_TYPE, message *C.uint8_t, length C.size_t, tox unsafe.Pointer) {
-	(*Tox)(tox).onFriendMessage((*Tox)(tox), uint32(friendnumber), MessageType(messagetype), string(C.GoBytes((unsafe.Pointer)(message), (C.int)(length))))
+	(*Tox)(tox).onFriendMessage((*Tox)(tox), uint32(friendnumber), ToxMessageType(messagetype), string(C.GoBytes((unsafe.Pointer)(message), (C.int)(length))))
 }
 
 //export hook_callback_file_recv_control
 func hook_callback_file_recv_control(t unsafe.Pointer, friendnumber C.uint32_t, filenumber C.uint32_t, control C.enum_TOX_FILE_CONTROL, tox unsafe.Pointer) {
-	(*Tox)(tox).onFileRecvControl((*Tox)(tox), uint32(friendnumber), uint32(filenumber), FileControl(control))
+	(*Tox)(tox).onFileRecvControl((*Tox)(tox), uint32(friendnumber), uint32(filenumber), ToxFileControl(control))
 }
 
 //export hook_callback_file_chunk_request

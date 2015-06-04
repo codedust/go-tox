@@ -25,18 +25,28 @@ var transfersFilesizes = make(map[uint32]uint64)
 func main() {
 	var newToxInstance bool = false
 	var filepath string
+	var options *gotox.Options
 
 	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
 
-	data, err := loadData(filepath)
-	if err != nil {
+	savedata, err := loadData(filepath)
+	if err == nil {
+		options = &gotox.Options{
+			true, true,
+			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
+			3389,
+			gotox.TOX_SAVEDATA_TYPE_TOX_SAVE, savedata}
+	} else {
+		options = &gotox.Options{
+			true, true,
+			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
+			3389,
+			gotox.TOX_SAVEDATA_TYPE_NONE, nil}
 		newToxInstance = true
 	}
 
-	o := &gotox.Options{true, true, gotox.PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0}
-
-	tox, err := gotox.New(o, data)
+	tox, err := gotox.New(options)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +59,7 @@ func main() {
 	addr, _ := tox.SelfGetAddress()
 	fmt.Println("ID: ", hex.EncodeToString(addr))
 
-	err = tox.SelfSetStatus(gotox.USERSTATUS_NONE)
+	err = tox.SelfSetStatus(gotox.TOX_USERSTATUS_NONE)
 
 	// Register our callbacks
 	tox.CallbackFriendRequest(onFriendRequest)
@@ -99,8 +109,8 @@ func onFriendRequest(t *gotox.Tox, publicKey []byte, message string) {
 	t.FriendAddNorequest(publicKey)
 }
 
-func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.MessageType, message string) {
-	if messagetype == gotox.MESSAGE_TYPE_NORMAL {
+func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.ToxMessageType, message string) {
+	if messagetype == gotox.TOX_MESSAGE_TYPE_NORMAL {
 		fmt.Printf("New message from %d : %s\n", friendnumber, message)
 	} else {
 		fmt.Printf("New action from %d : %s\n", friendnumber, message)
@@ -112,7 +122,7 @@ func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.Messag
 
 func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind uint32, filesize uint64, filename string) {
 	// Accept any file send request
-	t.SendFileControl(friendnumber, true, filenumber, gotox.FILE_CONTROL_RESUME, nil)
+	t.SendFileControl(friendnumber, true, filenumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
 	// Init *File handle
 	f, _ := os.Create("example_" + filename)
 	// Append f to the map[uint8]*os.File
@@ -120,7 +130,7 @@ func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind uint3
 	transfersFilesizes[filenumber] = filesize
 }
 
-func onFileRecvControl(t *gotox.Tox, friendnumber uint32, filenumber uint32, fileControl gotox.FileControl) {
+func onFileRecvControl(t *gotox.Tox, friendnumber uint32, filenumber uint32, fileControl gotox.ToxFileControl) {
 	// Do something useful
 }
 
@@ -137,7 +147,7 @@ func onFileRecvChunk(t *gotox.Tox, friendnumber uint32, filenumber uint32, posit
 		f.Close()
 		delete(transfers, filenumber)
 		fmt.Println("Written file", filenumber)
-		t.FriendSendMessage(friendnumber, gotox.MESSAGE_TYPE_NORMAL, "Thanks!")
+		t.FriendSendMessage(friendnumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Thanks!")
 	}
 }
 

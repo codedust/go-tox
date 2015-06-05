@@ -1,0 +1,103 @@
+# List of implemented toxcore features
+`DONE` This means the function is already implemented.
+`WONT` This means the function will probably not be implemented.
+
+Groupchats will probably not be added before the new groupchat API is ready.
+
+## toxcore.h
+```
+tox_version_major
+tox_version_minor
+tox_version_patch
+tox_version_is_compatible
+WONT tox_options_default
+WONT tox_options_new
+WONT tox_options_free
+DONE tox_new
+DONE tox_kill
+DONE tox_get_savedata_size
+DONE tox_get_savedata
+DONE tox_bootstrap
+tox_add_tcp_relay
+DONE tox_self_get_connection_status
+DONE tox_callback_self_connection_status
+DONE tox_iteration_interval
+DONE tox_iterate
+DONE tox_self_get_address
+DONE tox_self_set_nospam
+DONE tox_self_get_nospam
+tox_self_get_public_key
+tox_self_get_secret_key
+DONE tox_self_set_name
+DONE tox_self_get_name_size
+DONE tox_self_get_name
+DONE tox_self_set_status_message
+DONE tox_self_get_status_message_size
+DONE tox_self_get_status_message
+DONE tox_self_set_status
+DONE tox_self_get_status
+DONE tox_friend_add
+DONE tox_friend_add_norequest
+DONE tox_friend_delete
+DONE tox_friend_by_public_key
+DONE tox_friend_exists
+DONE tox_self_get_friend_list_size
+DONE tox_self_get_friend_list
+DONE tox_friend_get_public_key
+DONE tox_friend_get_last_online
+DONE tox_friend_get_name_size
+DONE tox_friend_get_name
+DONE tox_callback_friend_name
+DONE tox_friend_get_status_message_size
+DONE tox_friend_get_status_message
+DONE tox_callback_friend_status_message
+DONE tox_friend_get_status
+DONE tox_callback_friend_status
+DONE tox_friend_get_connection_status
+DONE tox_callback_friend_connection_status
+DONE tox_friend_get_typing
+DONE tox_callback_friend_typing
+DONE tox_self_set_typing
+DONE tox_friend_send_message
+DONE tox_callback_friend_read_receipt
+DONE tox_callback_friend_request
+DONE tox_callback_friend_message
+tox_hash
+DONE tox_file_control
+DONE tox_callback_file_recv_control
+tox_file_seek
+tox_file_get_file_id
+tox_file_send
+tox_file_send_chunk
+DONE tox_callback_file_chunk_request
+DONE tox_callback_file_recv
+DONE tox_callback_file_recv_chunk
+tox_friend_send_lossy_packet
+tox_friend_send_lossless_packet
+DONE tox_callback_friend_lossy_packet
+DONE tox_callback_friend_lossless_packet
+tox_self_get_dht_id
+tox_self_get_udp_port
+tox_self_get_tcp_port
+tox_callback_group_invite
+tox_callback_group_message
+tox_callback_group_action
+tox_callback_group_title
+tox_callback_group_namelist_change
+tox_add_groupchat
+tox_del_groupchat
+tox_group_peername
+tox_group_peer_pubkey
+tox_invite_friend
+tox_join_groupchat
+tox_group_message_send
+tox_group_action_send
+tox_group_set_title
+tox_group_get_title
+tox_group_peernumber_is_ours
+tox_group_number_peers
+tox_group_get_names
+tox_count_chatlist
+tox_get_chatlist
+tox_group_get_type
+```

@@ -7,6 +7,68 @@ package gotox
 import "C"
 import "unsafe"
 
+/* This event is triggered whenever there is a change in the DHT connection
+ * state. When disconnected, a client may choose to call tox_bootstrap again, to
+ * reconnect to the DHT. Note that this state may frequently change for short
+ * amounts of time. Clients should therefore not immediately bootstrap on
+ * receiving a disconnect. */
+type OnSelfConnectionStatusChanges func(tox *Tox, status ToxConnection)
+
+/* This event is triggered when a friend changes their name. */
+type OnFriendNameChanges func(tox *Tox, friendnumber uint32, name string)
+
+/* This event is triggered when a friend changes their status message. */
+type OnFriendStatusMessageChanges func(tox *Tox, friendnumber uint32, message string)
+
+/* This event is triggered when a friend changes their user status. */
+type OnFriendStatusChanges func(tox *Tox, friendnumber uint32, userstatus ToxUserStatus)
+
+/* This event is triggered when a friend goes offline after having been online,
+ * or when a friend goes online.
+ *
+ * This callback is not called when adding friends. It is assumed that when
+ * adding friends, their connection status is initially offline. */
+type OnFriendConnectionStatusChanges func(tox *Tox, friendnumber uint32, connectionstatus ToxConnection)
+
+/* This event is triggered when a friend starts or stops typing. */
+type OnFriendTypingChanges func(tox *Tox, friendnumber uint32, istyping bool)
+
+/* This event is triggered when the friend receives the message with the
+ * corresponding message ID. */
+type OnFriendReadReceipt func(tox *Tox, friendnumber uint32, messageid uint32)
+
+/* This event is triggered when a friend request is received. */
+type OnFriendRequest func(tox *Tox, publickey []byte, message string)
+
+/* This event is triggered when a message from a friend is received. */
+type OnFriendMessage func(tox *Tox, friendnumber uint32, messagetype ToxMessageType, message string)
+
+/* This event is triggered when a file control command is received from a
+ * friend. */
+type OnFileRecvControl func(tox *Tox, friendnumber uint32, filenumber uint32, filecontrol ToxFileControl)
+
+/* This event is triggered when Core is ready to send more file data. */
+type OnFileChunkRequest func(tox *Tox, friendnumber uint32, filenumber uint32, position uint64, length uint64)
+
+/* This event is triggered when a file transfer request is received. */
+type OnFileRecv func(tox *Tox, friendnumber uint32, filenumber uint32, kind uint32, filesize uint64, filename string)
+
+/* This event is first triggered when a file transfer request is received, and
+ * subsequently when a chunk of file data for an accepted request was received.
+ */
+type OnFileRecvChunk func(tox *Tox, friendnumber uint32, filenumber uint32, position uint64, data []byte)
+
+/* This event is triggered when a lossy packet is received from a friend. */
+type OnFriendLossyPacket func(tox *Tox, friendnumber uint32, data []byte)
+
+/* This event is triggered when a lossless packet is received from a friend. */
+type OnFriendLosslessPacket func(tox *Tox, friendnumber uint32, data []byte)
+
+
+/*
+ * Functions to register the callbacks.
+ */
+
 func (t *Tox) CallbackSelfConnectionStatusChanges(f OnSelfConnectionStatusChanges) {
 	if t.tox != nil {
 		t.onSelfConnectionStatusChanges = f

@@ -35,13 +35,14 @@ func main() {
 		options = &gotox.Options{
 			true, true,
 			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
-			3389,
+			0, // local TCP server is disabled. Only enable it if your client provides
+			   // an option to disable it.
 			gotox.TOX_SAVEDATA_TYPE_TOX_SAVE, savedata}
 	} else {
 		options = &gotox.Options{
 			true, true,
 			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
-			3389,
+			0,
 			gotox.TOX_SAVEDATA_TYPE_NONE, nil}
 		newToxInstance = true
 	}

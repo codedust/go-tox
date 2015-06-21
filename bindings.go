@@ -167,7 +167,7 @@ func (t *Tox) IterationInterval() (uint32, error) {
 	return uint32(ret), nil
 }
 
-/* Iterate is the main loop needs to be called every IterationInterval()
+/* Iterate is the main loop. It needs to be called every IterationInterval()
  * milliseconds. */
 func (t *Tox) Iterate() error {
 	if t.tox == nil {
@@ -227,7 +227,7 @@ func (t *Tox) SelfSetName(name string) error {
 
 	var setInfoError C.TOX_ERR_SET_INFO = C.TOX_ERR_SET_INFO_OK
 	success := C.tox_self_set_name(t.tox, cName, (C.size_t)(len(name)), &setInfoError)
-	if !success || ToxErrSetInfo(setInfoError) != TOX_ERR_SET_INFO_OK {
+	if !bool(success) || ToxErrSetInfo(setInfoError) != TOX_ERR_SET_INFO_OK {
 		return ErrFuncFail
 	}
 
@@ -720,7 +720,7 @@ func (t *Tox) SelfSetTyping(friendnumber uint32, typing bool) error {
 	var toxErrSetTyping C.TOX_ERR_SET_TYPING = C.TOX_ERR_SET_TYPING_OK
 	success := C.tox_self_set_typing(t.tox, (C.uint32_t)(friendnumber), (C._Bool)(typing), &toxErrSetTyping)
 
-	if !success || ToxErrSetTyping(toxErrSetTyping) != TOX_ERR_SET_TYPING_OK {
+	if !bool(success) || ToxErrSetTyping(toxErrSetTyping) != TOX_ERR_SET_TYPING_OK {
 		return ErrFuncFail
 	}
 
@@ -779,7 +779,7 @@ func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32
 	var toxErrfileControl C.TOX_ERR_FILE_CONTROL
 	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &toxErrfileControl)
 
-	if !success || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
+	if !(success) || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
 		return ErrFuncFail
 	}
 

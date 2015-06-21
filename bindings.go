@@ -779,7 +779,7 @@ func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32
 	var toxErrfileControl C.TOX_ERR_FILE_CONTROL
 	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &toxErrfileControl)
 
-	if !(success) || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
+	if !bool(success) || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
 		return ErrFuncFail
 	}
 

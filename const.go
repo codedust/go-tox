@@ -35,6 +35,13 @@ const (
 	TOX_USERSTATUS_BUSY ToxUserStatus = C.TOX_USER_STATUS_BUSY
 )
 
+type ToxFileKind C.enum_TOX_FILE_KIND
+
+const (
+	TOX_FILE_KIND_DATA ToxFileKind = C.TOX_FILE_KIND_DATA
+	TOX_FILE_KIND_AVATAR ToxFileKind = C.TOX_FILE_KIND_AVATAR
+)
+
 type ToxFileControl C.enum_TOX_FILE_CONTROL
 
 const (

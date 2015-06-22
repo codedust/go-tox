@@ -61,7 +61,7 @@ func hook_callback_file_chunk_request(t unsafe.Pointer, friendnumber C.uint32_t,
 
 //export hook_callback_file_recv
 func hook_callback_file_recv(t unsafe.Pointer, friendnumber C.uint32_t, filenumber C.uint32_t, kind C.uint32_t, filesize C.uint64_t, filename *C.uint8_t, filenamelength C.size_t, tox unsafe.Pointer) {
-	(*Tox)(tox).onFileRecv((*Tox)(tox), uint32(friendnumber), uint32(filenumber), uint32(kind), uint64(filesize), string(C.GoBytes((unsafe.Pointer)(filename), (C.int)(filenamelength))))
+	(*Tox)(tox).onFileRecv((*Tox)(tox), uint32(friendnumber), uint32(filenumber), ToxFileKind(kind), uint64(filesize), string(C.GoBytes((unsafe.Pointer)(filename), (C.int)(filenamelength))))
 }
 
 //export hook_callback_file_recv_chunk

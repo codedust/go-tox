@@ -51,7 +51,7 @@ type OnFileRecvControl func(tox *Tox, friendnumber uint32, filenumber uint32, fi
 type OnFileChunkRequest func(tox *Tox, friendnumber uint32, filenumber uint32, position uint64, length uint64)
 
 /* This event is triggered when a file transfer request is received. */
-type OnFileRecv func(tox *Tox, friendnumber uint32, filenumber uint32, kind uint32, filesize uint64, filename string)
+type OnFileRecv func(tox *Tox, friendnumber uint32, filenumber uint32, kind ToxFileKind, filesize uint64, filename string)
 
 /* This event is first triggered when a file transfer request is received, and
  * subsequently when a chunk of file data for an accepted request was received.

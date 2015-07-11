@@ -121,7 +121,7 @@ func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.ToxMes
 	t.FriendSendMessage(friendnumber, messagetype, message)
 }
 
-func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind uint32, filesize uint64, filename string) {
+func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
 	// Accept any file send request
 	t.FileControl(friendnumber, true, filenumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
 	// Init *File handle

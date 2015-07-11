@@ -3,7 +3,7 @@ gotox
 
 gotox is a Go wrapper for the [toxcore](https://github.com/irungentoo/toxcore) library.
 
-Pull requests, bug reporting and feature request (via github issues) are always welcome. :)
+Pull requests, bug reportings and feature requests (via github issues) are always welcome. :)
 
 For a list of supported toxcore features see [PROGRESS.md](PROGRESS.md).
 

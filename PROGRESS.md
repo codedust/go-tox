@@ -12,7 +12,7 @@ tox_version_patch
 tox_version_is_compatible
 WONT tox_options_default
 WONT tox_options_new
-WONT tox_options_free
+tox_options_free
 DONE tox_new
 DONE tox_kill
 DONE tox_get_savedata_size
@@ -67,8 +67,8 @@ DONE tox_file_control
 DONE tox_callback_file_recv_control
 tox_file_seek
 tox_file_get_file_id
-tox_file_send
-tox_file_send_chunk
+DONE tox_file_send
+DONE tox_file_send_chunk
 DONE tox_callback_file_chunk_request
 DONE tox_callback_file_recv
 DONE tox_callback_file_recv_chunk

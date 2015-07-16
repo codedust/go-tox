@@ -16,7 +16,6 @@ package gotox
 import "C"
 import "sync"
 
-
 /* Tox is the main struct. */
 type Tox struct {
 	tox *C.Tox

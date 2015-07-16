@@ -64,7 +64,6 @@ type OnFriendLossyPacket func(tox *Tox, friendnumber uint32, data []byte)
 /* This event is triggered when a lossless packet is received from a friend. */
 type OnFriendLosslessPacket func(tox *Tox, friendnumber uint32, data []byte)
 
-
 /*
  * Functions to register the callbacks.
  */

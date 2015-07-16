@@ -45,7 +45,6 @@ func main() {
 	alice.CallbackFriendConnectionStatusChanges(onFriendConnectionStatusChanges)
 	alice.CallbackSelfConnectionStatusChanges(onSelfConnectionStatusChanges)
 
-
 	/* Connect to the network
 	 * Use more than one node in a real world szenario. This example relies one
 	 * the following node to be up.

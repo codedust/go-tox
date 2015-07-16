@@ -36,7 +36,7 @@ func main() {
 			true, true,
 			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
 			0, // local TCP server is disabled. Only enable it if your client provides
-			   // an option to disable it.
+			// an option to disable it.
 			gotox.TOX_SAVEDATA_TYPE_TOX_SAVE, savedata}
 	} else {
 		options = &gotox.Options{
@@ -65,8 +65,9 @@ func main() {
 	// Register our callbacks
 	tox.CallbackFriendRequest(onFriendRequest)
 	tox.CallbackFriendMessage(onFriendMessage)
-	tox.CallbackFileRecv(onFileRecv)
 	tox.CallbackFileRecvControl(onFileRecvControl)
+	tox.CallbackFileChunkRequest(onFileChunkRequest)
+	tox.CallbackFileRecv(onFileRecv)
 	tox.CallbackFileRecvChunk(onFileRecvChunk)
 
 	/* Connect to the network
@@ -110,45 +111,97 @@ func onFriendRequest(t *gotox.Tox, publicKey []byte, message string) {
 	t.FriendAddNorequest(publicKey)
 }
 
-func onFriendMessage(t *gotox.Tox, friendnumber uint32, messagetype gotox.ToxMessageType, message string) {
+func onFriendMessage(t *gotox.Tox, friendNumber uint32, messagetype gotox.ToxMessageType, message string) {
 	if messagetype == gotox.TOX_MESSAGE_TYPE_NORMAL {
-		fmt.Printf("New message from %d : %s\n", friendnumber, message)
+		fmt.Printf("New message from %d : %s\n", friendNumber, message)
 	} else {
-		fmt.Printf("New action from %d : %s\n", friendnumber, message)
+		fmt.Printf("New action from %d : %s\n", friendNumber, message)
 	}
 
-	// Echo back
-	t.FriendSendMessage(friendnumber, messagetype, message)
+	switch message {
+	case "/help":
+		t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Type '/file' to receive a file.")
+	case "/file":
+		file, err := os.Open("sample_image.jpg")
+		if err != nil {
+			t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "File not found. Please 'cd' into go-tox/examples and type 'go run example.go'")
+			file.Close()
+			return
+		}
+
+		// get the file size
+		stat, err := file.Stat()
+		if err != nil {
+			t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Could not read file stats.")
+			file.Close()
+			return
+		}
+
+		fmt.Println("File size is ", stat.Size())
+
+		fileNumber, err := t.FileSend(friendNumber, gotox.TOX_FILE_KIND_DATA, uint64(stat.Size()), nil, "fileName.jpg")
+		if err != nil {
+			t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "t.FileSend() failed.")
+			file.Close()
+			return
+		}
+
+		transfers[fileNumber] = file
+		transfersFilesizes[fileNumber] = uint64(stat.Size())
+	default:
+		t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Type '/help' for available commands.")
+	}
 }
 
-func onFileRecv(t *gotox.Tox, friendnumber uint32, filenumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
+func onFileRecv(t *gotox.Tox, friendNumber uint32, fileNumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
 	// Accept any file send request
-	t.FileControl(friendnumber, true, filenumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
+	t.FileControl(friendNumber, true, fileNumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
 	// Init *File handle
 	f, _ := os.Create("example_" + filename)
 	// Append f to the map[uint8]*os.File
-	transfers[filenumber] = f
-	transfersFilesizes[filenumber] = filesize
+	transfers[fileNumber] = f
+	transfersFilesizes[fileNumber] = filesize
 }
 
-func onFileRecvControl(t *gotox.Tox, friendnumber uint32, filenumber uint32, fileControl gotox.ToxFileControl) {
-	// Do something useful
+func onFileRecvControl(t *gotox.Tox, friendNumber uint32, fileNumber uint32, fileControl gotox.ToxFileControl) {
+	if fileControl == gotox.TOX_FILE_CONTROL_CANCEL {
+		// delete (hopefully existing) filehandle
+		transfers[fileNumber].Close()
+		delete(transfers, fileNumber)
+		delete(transfersFilesizes, fileNumber)
+	}
 }
 
-func onFileRecvChunk(t *gotox.Tox, friendnumber uint32, filenumber uint32, position uint64, data []byte) {
-	// Write data to the hopefully valid *File handle
-	if f, exists := transfers[filenumber]; exists {
+func onFileChunkRequest(t *gotox.Tox, friendNumber uint32, fileNumber uint32, position uint64, length uint64) {
+	// read from the (hopefully existing) filehandle
+	if length+position > transfersFilesizes[fileNumber] {
+		length = transfersFilesizes[fileNumber] - position
+	}
+
+	data := make([]byte, length)
+	_, err := transfers[fileNumber].ReadAt(data, int64(position))
+	if err != nil {
+		fmt.Println("Error reading file", err)
+	}
+
+	t.FileSendChunk(friendNumber, fileNumber, position, data)
+}
+
+func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, position uint64, data []byte) {
+	// write data to the hopefully existing filehandle
+	if f, exists := transfers[fileNumber]; exists {
 		f.WriteAt(data, (int64)(position))
 	}
 
 	// Finished receiving file
-	if position == transfersFilesizes[filenumber] {
-		f := transfers[filenumber]
+	if position == transfersFilesizes[fileNumber] {
+		f := transfers[fileNumber]
 		f.Sync()
 		f.Close()
-		delete(transfers, filenumber)
-		fmt.Println("Written file", filenumber)
-		t.FriendSendMessage(friendnumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Thanks!")
+		delete(transfers, fileNumber)
+		delete(transfersFilesizes, fileNumber)
+		fmt.Println("Written file", fileNumber)
+		t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Thanks!")
 	}
 }
 

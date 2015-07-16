@@ -776,12 +776,72 @@ func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32
 		cFileControl = C.TOX_FILE_CONTROL_CANCEL
 	}
 
-	var toxErrfileControl C.TOX_ERR_FILE_CONTROL
-	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &toxErrfileControl)
+	var toxErrFileControl C.TOX_ERR_FILE_CONTROL
+	success := C.tox_file_control(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(filenumber), cFileControl, &toxErrFileControl)
 
-	if !bool(success) || ToxErrFileControl(toxErrfileControl) != TOX_ERR_FILE_CONTROL_OK {
+	if !bool(success) || ToxErrFileControl(toxErrFileControl) != TOX_ERR_FILE_CONTROL_OK {
 		return ErrFuncFail
 	}
 
+	return nil
+}
+
+/* FileSend sends a file transmission request. */
+func (t *Tox) FileSend(friendnumber uint32, fileKind ToxFileKind, fileLength uint64, fileID []byte, fileName string) (uint32, error) {
+	if t.tox == nil {
+		return 0, ErrBadTox
+	}
+
+	var cFileKind = C.TOX_FILE_KIND_DATA
+	switch ToxFileKind(fileKind) {
+	case TOX_FILE_KIND_AVATAR:
+		cFileKind = C.TOX_FILE_KIND_AVATAR
+	case TOX_FILE_KIND_DATA:
+		cFileKind = C.TOX_FILE_KIND_DATA
+	}
+
+	if fileID != nil && len(fileID) != TOX_FILE_ID_LENGTH {
+		return 0, ErrFileSendInvalidFileID
+	}
+
+	var cFileID *C.uint8_t
+
+	if fileID == nil {
+		cFileID = nil
+	} else {
+		cFileID = (*C.uint8_t)(&[]byte(fileID)[0])
+	}
+
+	cFileName := (*C.uint8_t)(&[]byte(fileName)[0])
+
+	var toxErrFileSend C.TOX_ERR_FILE_SEND
+	n := C.tox_file_send(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(cFileKind), (C.uint64_t)(fileLength), cFileID, cFileName, (C.size_t)(len(fileName)), &toxErrFileSend)
+
+	if n == C.UINT32_MAX || ToxErrFileSend(toxErrFileSend) != TOX_ERR_FILE_SEND_OK {
+		return 0, ErrFuncFail
+	}
+	return uint32(n), nil
+}
+
+/* FileSendChunk sends a chunk of file data to a friend. */
+func (t *Tox) FileSendChunk(friendnumber uint32, fileNumber uint32, position uint64, data []byte) error {
+	if t.tox == nil {
+		return ErrBadTox
+	}
+
+	var cData *C.uint8_t
+
+	if len(data) == 0 {
+		cData = nil
+	} else {
+		cData = (*C.uint8_t)(&data[0])
+	}
+
+	var toxErrFileSendChunk C.TOX_ERR_FILE_SEND_CHUNK
+	success := C.tox_file_send_chunk(t.tox, (C.uint32_t)(friendnumber), (C.uint32_t)(fileNumber), (C.uint64_t)(position), cData, (C.size_t)(len(data)), &toxErrFileSendChunk)
+
+	if !bool(success) || ToxErrFileSendChunk(toxErrFileSendChunk) != TOX_ERR_FILE_SEND_CHUNK_OK {
+		return ErrFuncFail
+	}
 	return nil
 }

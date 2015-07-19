@@ -100,7 +100,7 @@ func (t *Tox) GetSavedata() ([]byte, error) {
 		return nil, ErrBadTox
 	}
 	size, err := t.GetSaveDataSize()
-	if err != nil {
+	if err != nil || size == 0 {
 		return nil, ErrFuncFail
 	}
 
@@ -219,11 +219,13 @@ func (t *Tox) SelfSetName(name string) error {
 		return ErrBadTox
 	}
 
-	if len(name) == 0 {
-		return ErrArgs
-	}
+	var cName (*C.uint8_t)
 
-	cName := (*C.uint8_t)(&[]byte(name)[0])
+	if len(name) == 0 {
+		cName = nil
+	} else {
+		cName = (*C.uint8_t)(&[]byte(name)[0])
+	}
 
 	var setInfoError C.TOX_ERR_SET_INFO = C.TOX_ERR_SET_INFO_OK
 	success := C.tox_self_set_name(t.tox, cName, (C.size_t)(len(name)), &setInfoError)
@@ -272,11 +274,13 @@ func (t *Tox) SelfSetStatusMessage(status string) error {
 		return ErrBadTox
 	}
 
-	if len(status) == 0 {
-		return ErrArgs
-	}
+	var cStatus (*C.uint8_t)
 
-	cStatus := (*C.uint8_t)(&[]byte(status)[0])
+	if len(status) == 0 {
+		cStatus = nil
+	} else {
+		cStatus = (*C.uint8_t)(&[]byte(status)[0])
+	}
 
 	var setInfoError C.TOX_ERR_SET_INFO = C.TOX_ERR_SET_INFO_OK
 	C.tox_self_set_status_message(t.tox, cStatus, (C.size_t)(len(status)), &setInfoError)
@@ -800,16 +804,21 @@ func (t *Tox) FileSend(friendnumber uint32, fileKind ToxFileKind, fileLength uin
 		cFileKind = C.TOX_FILE_KIND_DATA
 	}
 
-	if fileID != nil && len(fileID) != TOX_FILE_ID_LENGTH {
-		return 0, ErrFileSendInvalidFileID
-	}
 
 	var cFileID *C.uint8_t
 
 	if fileID == nil {
 		cFileID = nil
 	} else {
+		if len(fileID) != TOX_FILE_ID_LENGTH {
+			return 0, ErrFileSendInvalidFileID
+		}
+
 		cFileID = (*C.uint8_t)(&[]byte(fileID)[0])
+	}
+
+	if len(fileName) == 0 {
+		return 0, ErrArgs
 	}
 
 	cFileName := (*C.uint8_t)(&[]byte(fileName)[0])

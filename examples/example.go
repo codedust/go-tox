@@ -178,6 +178,15 @@ func onFileChunkRequest(t *gotox.Tox, friendNumber uint32, fileNumber uint32, po
 		length = transfersFilesizes[fileNumber] - position
 	}
 
+	if length == 0 {
+		transfers[fileNumber].Sync()
+		transfers[fileNumber].Close()
+		delete(transfers, fileNumber)
+		delete(transfersFilesizes, fileNumber)
+		fmt.Println("File transfer completed (sending)", fileNumber)
+		return
+	}
+
 	data := make([]byte, length)
 	_, err := transfers[fileNumber].ReadAt(data, int64(position))
 	if err != nil {
@@ -200,7 +209,7 @@ func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, posit
 		f.Close()
 		delete(transfers, fileNumber)
 		delete(transfersFilesizes, fileNumber)
-		fmt.Println("Written file", fileNumber)
+		fmt.Println("File transfer completed (receiving)", fileNumber)
 		t.FriendSendMessage(friendNumber, gotox.TOX_MESSAGE_TYPE_NORMAL, "Thanks!")
 	}
 }

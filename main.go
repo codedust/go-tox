@@ -18,8 +18,9 @@ import "sync"
 
 /* Tox is the main struct. */
 type Tox struct {
-	tox *C.Tox
-	mtx sync.Mutex
+	cOptions *C.struct_Tox_Options
+	tox      *C.Tox
+	mtx      sync.Mutex
 
 	// Callbacks
 	onSelfConnectionStatusChanges   OnSelfConnectionStatusChanges

@@ -12,7 +12,7 @@ DONE tox_version_patch
 DONE tox_version_is_compatible
 WONT tox_options_default
 WONT tox_options_new
-tox_options_free
+WONT tox_options_free
 DONE tox_new
 DONE tox_kill
 DONE tox_get_savedata_size

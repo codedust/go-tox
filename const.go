@@ -5,27 +5,17 @@ import "C"
 import "errors"
 
 const (
-	TOX_MAX_NAME_LENGTH           = C.TOX_MAX_NAME_LENGTH
-	TOX_MAX_MESSAGE_LENGTH        = C.TOX_MAX_MESSAGE_LENGTH
-	TOX_MAX_STATUS_MESSAGE_LENGTH = C.TOX_MAX_STATUS_MESSAGE_LENGTH
 	TOX_PUBLIC_KEY_SIZE           = C.TOX_PUBLIC_KEY_SIZE
+	TOX_SECRET_KEY_SIZE           = C.TOX_SECRET_KEY_SIZE
 	TOX_ADDRESS_SIZE              = C.TOX_ADDRESS_SIZE
+	TOX_MAX_NAME_LENGTH           = C.TOX_MAX_NAME_LENGTH
+	TOX_MAX_STATUS_MESSAGE_LENGTH = C.TOX_MAX_STATUS_MESSAGE_LENGTH
+	TOX_MAX_FRIEND_REQUEST_LENGTH = C.TOX_MAX_FRIEND_REQUEST_LENGTH
+	TOX_MAX_MESSAGE_LENGTH        = C.TOX_MAX_MESSAGE_LENGTH
+	TOX_MAX_CUSTOM_PACKET_SIZE    = C.TOX_MAX_CUSTOM_PACKET_SIZE
+	TOX_HASH_LENGTH               = C.TOX_HASH_LENGTH
 	TOX_FILE_ID_LENGTH            = C.TOX_FILE_ID_LENGTH
-)
-
-type ToxConnection C.enum_TOX_CONNECTION
-
-const (
-	TOX_CONNECTION_NONE ToxConnection = C.TOX_CONNECTION_NONE
-	TOX_CONNECTION_TCP  ToxConnection = C.TOX_CONNECTION_TCP
-	TOX_CONNECTION_UDP  ToxConnection = C.TOX_CONNECTION_UDP
-)
-
-type ToxMessageType C.enum_TOX_MESSAGE_TYPE
-
-const (
-	TOX_MESSAGE_TYPE_NORMAL ToxMessageType = C.TOX_MESSAGE_TYPE_NORMAL
-	TOX_MESSAGE_TYPE_ACTION ToxMessageType = C.TOX_MESSAGE_TYPE_ACTION
+	TOX_MAX_FILENAME_LENGTH       = C.TOX_MAX_FILENAME_LENGTH
 )
 
 type ToxUserStatus C.enum_TOX_USER_STATUS
@@ -36,19 +26,11 @@ const (
 	TOX_USERSTATUS_BUSY ToxUserStatus = C.TOX_USER_STATUS_BUSY
 )
 
-type ToxFileKind C.enum_TOX_FILE_KIND
+type ToxMessageType C.enum_TOX_MESSAGE_TYPE
 
 const (
-	TOX_FILE_KIND_DATA   ToxFileKind = C.TOX_FILE_KIND_DATA
-	TOX_FILE_KIND_AVATAR ToxFileKind = C.TOX_FILE_KIND_AVATAR
-)
-
-type ToxFileControl C.enum_TOX_FILE_CONTROL
-
-const (
-	TOX_FILE_CONTROL_RESUME ToxFileControl = C.TOX_FILE_CONTROL_RESUME
-	TOX_FILE_CONTROL_PAUSE  ToxFileControl = C.TOX_FILE_CONTROL_PAUSE
-	TOX_FILE_CONTROL_CANCEL ToxFileControl = C.TOX_FILE_CONTROL_CANCEL
+	TOX_MESSAGE_TYPE_NORMAL ToxMessageType = C.TOX_MESSAGE_TYPE_NORMAL
+	TOX_MESSAGE_TYPE_ACTION ToxMessageType = C.TOX_MESSAGE_TYPE_ACTION
 )
 
 type ToxProxyType C.enum_TOX_PROXY_TYPE
@@ -67,13 +49,43 @@ const (
 	TOX_SAVEDATA_TYPE_SECRET_KEY ToxSaveDataType = C.TOX_SAVEDATA_TYPE_SECRET_KEY
 )
 
+type ToxErrOptionsNew C.enum_TOX_ERR_OPTIONS_NEW
+
+const (
+	TOX_ERR_OPTIONS_NEW_OK     ToxErrOptionsNew = C.TOX_ERR_OPTIONS_NEW_OK
+	TOX_ERR_OPTIONS_NEW_MALLOC ToxErrOptionsNew = C.TOX_ERR_OPTIONS_NEW_MALLOC
+)
+
+type ToxConnection C.enum_TOX_CONNECTION
+
+const (
+	TOX_CONNECTION_NONE ToxConnection = C.TOX_CONNECTION_NONE
+	TOX_CONNECTION_TCP  ToxConnection = C.TOX_CONNECTION_TCP
+	TOX_CONNECTION_UDP  ToxConnection = C.TOX_CONNECTION_UDP
+)
+
+type ToxFileKind C.enum_TOX_FILE_KIND
+
+const (
+	TOX_FILE_KIND_DATA   ToxFileKind = C.TOX_FILE_KIND_DATA
+	TOX_FILE_KIND_AVATAR ToxFileKind = C.TOX_FILE_KIND_AVATAR
+)
+
+type ToxFileControl C.enum_TOX_FILE_CONTROL
+
+const (
+	TOX_FILE_CONTROL_RESUME ToxFileControl = C.TOX_FILE_CONTROL_RESUME
+	TOX_FILE_CONTROL_PAUSE  ToxFileControl = C.TOX_FILE_CONTROL_PAUSE
+	TOX_FILE_CONTROL_CANCEL ToxFileControl = C.TOX_FILE_CONTROL_CANCEL
+)
+
 /* === Errors === */
 // General errors
 var (
-	ErrInit     = errors.New("Error initializing Tox")
-	ErrBadTox   = errors.New("Tox not initialized")
-	ErrFuncFail = errors.New("Function failed")
+	ErrToxNew   = errors.New("Error initializing Tox")
+	ErrToxInit  = errors.New("Tox not initialized")
 	ErrArgs     = errors.New("Nil arguments or wrong size")
+	ErrFuncFail = errors.New("Function failed")
 	ErrUnknown  = errors.New("An unknown error occoured")
 )
 
@@ -204,7 +216,9 @@ const (
 	TOX_ERR_FILE_CONTROL_SENDQ                ToxErrFileControl = C.TOX_ERR_FILE_CONTROL_SENDQ
 )
 
-var ErrFileSendInvalidFileID = errors.New("The size of the given FileID is invalid.")
+var (
+	ErrFileSendInvalidFileID = errors.New("The size of the given FileID is invalid.")
+)
 
 type ToxErrFileSend C.enum_TOX_ERR_FILE_SEND
 

@@ -8,40 +8,43 @@ import "unsafe"
 
 /* VersionMajor returns the major version number of the used Tox library */
 func VersionMajor() uint32 {
-	return uint32(C.tox_version_major());
+	return uint32(C.tox_version_major())
 }
 
 /* VersionMinor returns the minor version number of the used Tox library */
 func VersionMinor() uint32 {
-	return uint32(C.tox_version_minor());
+	return uint32(C.tox_version_minor())
 }
 
 /* VersionPatch returns the patch number of the used Tox library */
 func VersionPatch() uint32 {
-	return uint32(C.tox_version_patch());
+	return uint32(C.tox_version_patch())
 }
 
 /* VersionIsCompatible returns whether the compiled Tox library version is
  * compatible with the passed version numbers. */
 func VersionIsCompatible(major uint32, minor uint32, patch uint32) bool {
-	return bool(C.tox_version_is_compatible((C.uint32_t)(major), (C.uint32_t)(minor), (C.uint32_t)(patch)));
+	return bool(C.tox_version_is_compatible((C.uint32_t)(major), (C.uint32_t)(minor), (C.uint32_t)(patch)))
 }
 
-/* New returns a new Tox instance. */
+/* New creates and initialises a new Tox instance and returns the corresponding
+ * gotox instance. */
 func New(options *Options) (*Tox, error) {
-	var ctox *C.Tox
+	var cTox *C.Tox
 	var toxErrNew C.TOX_ERR_NEW
+	var toxErrOptionsNew C.TOX_ERR_OPTIONS_NEW
 
-	if options != nil {
-		// Let's map options from Options to C.Tox_Options
-		var cSaveData *C.uint8_t
-		if len(options.SaveData) > 0 {
-			cSaveData = (*C.uint8_t)(&options.SaveData[0])
-		} else {
-			cSaveData = nil
-		}
-		cIPv6Enabled := (C._Bool)(options.IPv6Enabled)
-		cUDPEnabled := (C._Bool)(options.UDPEnabled)
+	var cOptions *C.struct_Tox_Options = C.tox_options_new(&toxErrOptionsNew)
+	if cOptions == nil || ToxErrOptionsNew(toxErrOptionsNew) != TOX_ERR_OPTIONS_NEW_OK {
+		return nil, ErrFuncFail
+	}
+
+	if options == nil {
+		cOptions = nil
+	} else {
+		// map options from Options to C.Tox_Options
+		cOptions.ipv6_enabled = C.bool(options.IPv6Enabled)
+		cOptions.udp_enabled = C.bool(options.UDPEnabled)
 
 		var cProxyType C.TOX_PROXY_TYPE = C.TOX_PROXY_TYPE_NONE
 		if options.ProxyType == TOX_PROXY_TYPE_HTTP {
@@ -49,66 +52,64 @@ func New(options *Options) (*Tox, error) {
 		} else if options.ProxyType == TOX_PROXY_TYPE_SOCKS5 {
 			cProxyType = C.TOX_PROXY_TYPE_SOCKS5
 		}
-
-		var cSaveDataType C.TOX_SAVEDATA_TYPE = C.TOX_SAVEDATA_TYPE_NONE
-		if options.SaveDataType == TOX_SAVEDATA_TYPE_TOX_SAVE {
-			cSaveDataType = C.TOX_SAVEDATA_TYPE_TOX_SAVE
-		} else if options.SaveDataType == TOX_SAVEDATA_TYPE_SECRET_KEY {
-			cSaveDataType = C.TOX_SAVEDATA_TYPE_SECRET_KEY
-		}
+		cOptions.proxy_type = cProxyType
 
 		// max ProxyHost length is 255
 		if len(options.ProxyHost) > 255 {
 			return nil, ErrArgs
 		}
 		cProxyHost := C.CString(options.ProxyHost)
+		cOptions.proxy_host = cProxyHost
 		defer C.free(unsafe.Pointer(cProxyHost))
 
-		cProxyPort := (C.uint16_t)(options.ProxyPort)
-		cStartPort := (C.uint16_t)(options.StartPort)
-		cEndPort := (C.uint16_t)(options.EndPort)
+		cOptions.proxy_port = C.uint16_t(options.ProxyPort)
+		cOptions.start_port = C.uint16_t(options.StartPort)
+		cOptions.end_port = C.uint16_t(options.EndPort)
+		cOptions.tcp_port = C.uint16_t(options.TcpPort)
 
-		cOptions := &C.struct_Tox_Options{
-			ipv6_enabled:    cIPv6Enabled,
-			udp_enabled:     cUDPEnabled,
-			proxy_type:      cProxyType,
-			proxy_host:      cProxyHost,
-			proxy_port:      cProxyPort,
-			start_port:      cStartPort,
-			end_port:        cEndPort,
-			tcp_port:        0,
-			savedata_type:   cSaveDataType,
-			savedata_data:   cSaveData,
-			savedata_length: (C.size_t)(len(options.SaveData))}
+		if options.SaveDataType == TOX_SAVEDATA_TYPE_TOX_SAVE {
+			cOptions.savedata_type = C.TOX_SAVEDATA_TYPE_TOX_SAVE
+		} else if options.SaveDataType == TOX_SAVEDATA_TYPE_SECRET_KEY {
+			cOptions.savedata_type = C.TOX_SAVEDATA_TYPE_SECRET_KEY
+		}
 
-		ctox = C.tox_new(cOptions, &toxErrNew)
-	} else {
-		ctox = C.tox_new(nil, &toxErrNew)
+		if len(options.SaveData) > 0 {
+			cOptions.savedata_data = (*C.uint8_t)(&options.SaveData[0])
+		} else {
+			cOptions.savedata_data = nil
+		}
+
+		cOptions.savedata_length = C.size_t(len(options.SaveData))
 	}
 
-	if ctox == nil || ToxErrNew(toxErrNew) != TOX_ERR_NEW_OK {
-		return nil, ErrInit
+	cTox = C.tox_new(cOptions, &toxErrNew)
+	if cTox == nil || ToxErrNew(toxErrNew) != TOX_ERR_NEW_OK {
+		C.tox_options_free(cOptions)
+		return nil, ErrToxNew
 	}
 
-	t := &Tox{tox: ctox}
-
+	t := &Tox{tox: cTox, cOptions: cOptions}
 	return t, nil
 }
 
-/* Kill stops a Tox instance. */
+/* Kill releases all resources associated with the Tox instance and disconnects
+ * from the network.
+ * After calling this function `t *TOX` becomes invalid. Do not use it again! */
 func (t *Tox) Kill() error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
+
+	C.tox_options_free(t.cOptions)
 	C.tox_kill(t.tox)
 
 	return nil
 }
 
-/* GetSaveDataSize returns the size of the save data returned by GetSavedata. */
+/* GetSaveDataSize returns the size of the savedata returned by GetSavedata. */
 func (t *Tox) GetSaveDataSize() (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	return uint32(C.tox_get_savedata_size(t.tox)), nil
@@ -118,7 +119,7 @@ func (t *Tox) GetSaveDataSize() (uint32, error) {
  * instance. */
 func (t *Tox) GetSavedata() ([]byte, error) {
 	if t.tox == nil {
-		return nil, ErrBadTox
+		return nil, ErrToxInit
 	}
 	size, err := t.GetSaveDataSize()
 	if err != nil || size == 0 {
@@ -138,7 +139,7 @@ func (t *Tox) GetSavedata() ([]byte, error) {
  * port, and public key to setup connections. */
 func (t *Tox) Bootstrap(address string, port uint16, publickey []byte) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
@@ -170,7 +171,7 @@ func (t *Tox) Bootstrap(address string, port uint16, publickey []byte) error {
 /* SelfGetConnectionStatus returns true if Tox is connected to the DHT. */
 func (t *Tox) SelfGetConnectionStatus() (ToxConnection, error) {
 	if t.tox == nil {
-		return TOX_CONNECTION_NONE, ErrBadTox
+		return TOX_CONNECTION_NONE, ErrToxInit
 	}
 
 	return ToxConnection(C.tox_self_get_connection_status(t.tox)), nil
@@ -180,7 +181,7 @@ func (t *Tox) SelfGetConnectionStatus() (ToxConnection, error) {
  * called again. */
 func (t *Tox) IterationInterval() (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	ret := C.tox_iteration_interval(t.tox)
@@ -192,7 +193,7 @@ func (t *Tox) IterationInterval() (uint32, error) {
  * milliseconds. */
 func (t *Tox) Iterate() error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	t.mtx.Lock()
@@ -205,7 +206,7 @@ func (t *Tox) Iterate() error {
 /* SelfGetAddress returns the public address to give to others. */
 func (t *Tox) SelfGetAddress() ([]byte, error) {
 	if t.tox == nil {
-		return nil, ErrBadTox
+		return nil, ErrToxInit
 	}
 
 	address := make([]byte, TOX_ADDRESS_SIZE)
@@ -217,7 +218,7 @@ func (t *Tox) SelfGetAddress() ([]byte, error) {
 /* SelfSetNospam sets the nospam of your ID. */
 func (t *Tox) SelfSetNospam(nospam uint32) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	C.tox_self_set_nospam(t.tox, (C.uint32_t)(nospam))
@@ -227,7 +228,7 @@ func (t *Tox) SelfSetNospam(nospam uint32) error {
 /* SelfGetNospam returns the nospam of your ID. */
 func (t *Tox) SelfGetNospam() (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	n := C.tox_self_get_nospam(t.tox)
@@ -237,7 +238,7 @@ func (t *Tox) SelfGetNospam() (uint32, error) {
 /* SelfSetName sets your nickname. The maximum name length is MAX_NAME_LENGTH. */
 func (t *Tox) SelfSetName(name string) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var cName (*C.uint8_t)
@@ -260,7 +261,7 @@ func (t *Tox) SelfSetName(name string) error {
 /* SelfGetNameSize returns the length of your name. */
 func (t *Tox) SelfGetNameSize() (int64, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	ret := C.tox_self_get_name_size(t.tox)
@@ -271,7 +272,7 @@ func (t *Tox) SelfGetNameSize() (int64, error) {
 /* SelfGetName returns your nickname. */
 func (t *Tox) SelfGetName() (string, error) {
 	if t.tox == nil {
-		return "", ErrBadTox
+		return "", ErrToxInit
 	}
 
 	length, err := t.SelfGetNameSize()
@@ -292,7 +293,7 @@ func (t *Tox) SelfGetName() (string, error) {
  * The maximum status length is MAX_STATUS_MESSAGE_LENGTH. */
 func (t *Tox) SelfSetStatusMessage(status string) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var cStatus (*C.uint8_t)
@@ -316,7 +317,7 @@ func (t *Tox) SelfSetStatusMessage(status string) error {
 /* SelfGetStatusMessageSize returns the size of your status message. */
 func (t *Tox) SelfGetStatusMessageSize() (int64, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	ret := C.tox_self_get_status_message_size(t.tox)
@@ -327,7 +328,7 @@ func (t *Tox) SelfGetStatusMessageSize() (int64, error) {
 /* SelfGetStatusMessage returns your status message. */
 func (t *Tox) SelfGetStatusMessage() (string, error) {
 	if t.tox == nil {
-		return "", ErrBadTox
+		return "", ErrToxInit
 	}
 
 	length, err := t.SelfGetStatusMessageSize()
@@ -347,7 +348,7 @@ func (t *Tox) SelfGetStatusMessage() (string, error) {
 /* SelfSetStatus sets your userstatus. */
 func (t *Tox) SelfSetStatus(userstatus ToxUserStatus) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	C.tox_self_set_status(t.tox, (C.TOX_USER_STATUS)(userstatus))
@@ -358,7 +359,7 @@ func (t *Tox) SelfSetStatus(userstatus ToxUserStatus) error {
 /* SelfGetStatus returns your status. */
 func (t *Tox) SelfGetStatus() (ToxUserStatus, error) {
 	if t.tox == nil {
-		return TOX_USERSTATUS_NONE, ErrBadTox
+		return TOX_USERSTATUS_NONE, ErrToxInit
 	}
 
 	n := C.tox_self_get_status(t.tox)
@@ -372,7 +373,7 @@ func (t *Tox) SelfGetStatus() (ToxUserStatus, error) {
  */
 func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	if len(address) != TOX_ADDRESS_SIZE || len(message) == 0 {
@@ -418,7 +419,7 @@ func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
  */
 func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 	if t.tox == nil {
-		return C.UINT32_MAX, ErrBadTox
+		return C.UINT32_MAX, ErrToxInit
 	}
 
 	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
@@ -462,7 +463,7 @@ func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 /* FriendDelete removes a friend. */
 func (t *Tox) FriendDelete(friendnumber uint32) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var toxErrFriendDelete C.TOX_ERR_FRIEND_DELETE = C.TOX_ERR_FRIEND_DELETE_OK
@@ -488,7 +489,7 @@ func (t *Tox) FriendDelete(friendnumber uint32) error {
 /* FriendByPublicKey returns the friend number associated to a given publickey. */
 func (t *Tox) FriendByPublicKey(publickey []byte) (uint32, error) {
 	if t.tox == nil {
-		return C.UINT32_MAX, ErrBadTox
+		return C.UINT32_MAX, ErrToxInit
 	}
 
 	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
@@ -517,7 +518,7 @@ func (t *Tox) FriendByPublicKey(publickey []byte) (uint32, error) {
 /* FriendExists returns true if a friend exists with given friendnumber. */
 func (t *Tox) FriendExists(friendnumber uint32) (bool, error) {
 	if t.tox == nil {
-		return false, ErrBadTox
+		return false, ErrToxInit
 	}
 
 	ret := C.tox_friend_exists(t.tox, (C.uint32_t)(friendnumber))
@@ -528,7 +529,7 @@ func (t *Tox) FriendExists(friendnumber uint32) (bool, error) {
 /* SelfGetFriendlistSize returns the number of friends on the friendlist. */
 func (t *Tox) SelfGetFriendlistSize() (int64, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 	n := C.tox_self_get_friend_list_size(t.tox)
 
@@ -538,7 +539,7 @@ func (t *Tox) SelfGetFriendlistSize() (int64, error) {
 /* SelfGetFriendlist returns a slice of uint32 containing the friendnumbers. */
 func (t *Tox) SelfGetFriendlist() ([]uint32, error) {
 	if t.tox == nil {
-		return nil, ErrBadTox
+		return nil, ErrToxInit
 	}
 
 	size, err := t.SelfGetFriendlistSize()
@@ -558,7 +559,7 @@ func (t *Tox) SelfGetFriendlist() ([]uint32, error) {
 /* FriendGetPublickey returns the publickey associated to that friendnumber. */
 func (t *Tox) FriendGetPublickey(friendnumber uint32) ([]byte, error) {
 	if t.tox == nil {
-		return nil, ErrBadTox
+		return nil, ErrToxInit
 	}
 	publickey := make([]byte, TOX_PUBLIC_KEY_SIZE)
 	var toxErrFriendGetPublicKey C.TOX_ERR_FRIEND_GET_PUBLIC_KEY = C.TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK
@@ -585,7 +586,7 @@ func (t *Tox) FriendGetPublickey(friendnumber uint32) ([]byte, error) {
  * the given friendnumber was seen online. */
 func (t *Tox) FriendGetLastOnline(friendnumber uint32) (time.Time, error) {
 	if t.tox == nil {
-		return time.Time{}, ErrBadTox
+		return time.Time{}, ErrToxInit
 	}
 
 	var toxErrFriendGetLastOnline C.TOX_ERR_FRIEND_GET_LAST_ONLINE = C.TOX_ERR_FRIEND_GET_LAST_ONLINE_OK
@@ -603,7 +604,7 @@ func (t *Tox) FriendGetLastOnline(friendnumber uint32) (time.Time, error) {
 /* FriendGetNameSize returns the length of the name of friendnumber. */
 func (t *Tox) FriendGetNameSize(friendnumber uint32) (int64, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -619,7 +620,7 @@ func (t *Tox) FriendGetNameSize(friendnumber uint32) (int64, error) {
 /* FriendGetName returns the name of friendnumber. */
 func (t *Tox) FriendGetName(friendnumber uint32) (string, error) {
 	if t.tox == nil {
-		return "", ErrBadTox
+		return "", ErrToxInit
 	}
 
 	length, err := t.FriendGetNameSize(friendnumber)
@@ -646,7 +647,7 @@ func (t *Tox) FriendGetName(friendnumber uint32) (string, error) {
  */
 func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int64, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -664,7 +665,7 @@ func (t *Tox) FriendGetStatusMessageSize(friendnumber uint32) (int64, error) {
  */
 func (t *Tox) FriendGetStatusMessage(friendnumber uint32) (string, error) {
 	if t.tox == nil {
-		return "", ErrBadTox
+		return "", ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -691,7 +692,7 @@ func (t *Tox) FriendGetStatusMessage(friendnumber uint32) (string, error) {
 /* FriendGetStatus returns the status of friendnumber. */
 func (t *Tox) FriendGetStatus(friendnumber uint32) (ToxUserStatus, error) {
 	if t.tox == nil {
-		return TOX_USERSTATUS_NONE, ErrBadTox
+		return TOX_USERSTATUS_NONE, ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -707,7 +708,7 @@ func (t *Tox) FriendGetStatus(friendnumber uint32) (ToxUserStatus, error) {
 /* FriendGetConnectionStatus returns true if the friend is connected. */
 func (t *Tox) FriendGetConnectionStatus(friendnumber uint32) (ToxConnection, error) {
 	if t.tox == nil {
-		return TOX_CONNECTION_NONE, ErrBadTox
+		return TOX_CONNECTION_NONE, ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -723,7 +724,7 @@ func (t *Tox) FriendGetConnectionStatus(friendnumber uint32) (ToxConnection, err
 /* FriendGetTyping returns true if friendnumber is typing. */
 func (t *Tox) FriendGetTyping(friendnumber uint32) (bool, error) {
 	if t.tox == nil {
-		return false, ErrBadTox
+		return false, ErrToxInit
 	}
 
 	var toxErrFriendQuery C.TOX_ERR_FRIEND_QUERY = C.TOX_ERR_FRIEND_QUERY_OK
@@ -739,7 +740,7 @@ func (t *Tox) FriendGetTyping(friendnumber uint32) (bool, error) {
 /* SelfSetTyping sets your typing status to a friend. */
 func (t *Tox) SelfSetTyping(friendnumber uint32, typing bool) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var toxErrSetTyping C.TOX_ERR_SET_TYPING = C.TOX_ERR_SET_TYPING_OK
@@ -759,7 +760,7 @@ func (t *Tox) SelfSetTyping(friendnumber uint32, typing bool) error {
  */
 func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype ToxMessageType, message string) (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	if len(message) == 0 {
@@ -788,7 +789,7 @@ func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype ToxMessageType,
 /* FileControl sends a FileControl to a friend with the given friendnumber. */
 func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32, fileControl ToxFileControl, data []byte) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var cFileControl C.TOX_FILE_CONTROL
@@ -814,7 +815,7 @@ func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32
 /* FileSend sends a file transmission request. */
 func (t *Tox) FileSend(friendnumber uint32, fileKind ToxFileKind, fileLength uint64, fileID []byte, fileName string) (uint32, error) {
 	if t.tox == nil {
-		return 0, ErrBadTox
+		return 0, ErrToxInit
 	}
 
 	var cFileKind = C.TOX_FILE_KIND_DATA
@@ -824,7 +825,6 @@ func (t *Tox) FileSend(friendnumber uint32, fileKind ToxFileKind, fileLength uin
 	case TOX_FILE_KIND_DATA:
 		cFileKind = C.TOX_FILE_KIND_DATA
 	}
-
 
 	var cFileID *C.uint8_t
 
@@ -856,7 +856,7 @@ func (t *Tox) FileSend(friendnumber uint32, fileKind ToxFileKind, fileLength uin
 /* FileSendChunk sends a chunk of file data to a friend. */
 func (t *Tox) FileSendChunk(friendnumber uint32, fileNumber uint32, position uint64, data []byte) error {
 	if t.tox == nil {
-		return ErrBadTox
+		return ErrToxInit
 	}
 
 	var cData *C.uint8_t

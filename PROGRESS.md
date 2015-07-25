@@ -18,7 +18,7 @@ DONE tox_kill
 DONE tox_get_savedata_size
 DONE tox_get_savedata
 DONE tox_bootstrap
-tox_add_tcp_relay
+DONE tox_add_tcp_relay
 DONE tox_self_get_connection_status
 DONE tox_callback_self_connection_status
 DONE tox_iteration_interval

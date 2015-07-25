@@ -150,22 +150,59 @@ func (t *Tox) Bootstrap(address string, port uint16, publickey []byte) error {
 	defer C.free(unsafe.Pointer(caddr))
 
 	var toxErrBootstrap C.TOX_ERR_BOOTSTRAP
-	C.tox_bootstrap(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&publickey[0]), &toxErrBootstrap)
-
-	var bootstrapError error
+	success := C.tox_bootstrap(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&publickey[0]), &toxErrBootstrap)
 
 	switch ToxErrBootstrap(toxErrBootstrap) {
 	case TOX_ERR_BOOTSTRAP_OK:
-		bootstrapError = nil
+		return nil
 	case TOX_ERR_BOOTSTRAP_NULL:
-		bootstrapError = ErrArgs
+		return ErrArgs
 	case TOX_ERR_BOOTSTRAP_BAD_HOST:
-		bootstrapError = ErrFuncFail
+		return ErrFuncFail
 	case TOX_ERR_BOOTSTRAP_BAD_PORT:
-		bootstrapError = ErrFuncFail
+		return ErrFuncFail
 	}
 
-	return bootstrapError
+	if !bool(success) {
+		return ErrFuncFail
+	}
+
+	return ErrUnknown
+}
+
+/* AddTCPRelay adds the given node with IP, port, and public key without using
+ * it as a boostrap node. */
+func (t *Tox) AddTCPRelay(address string, port uint16, publickey []byte) error {
+	if t.tox == nil {
+		return ErrToxInit
+	}
+
+	if len(publickey) != TOX_PUBLIC_KEY_SIZE {
+		return ErrArgs
+	}
+
+	caddr := C.CString(address)
+	defer C.free(unsafe.Pointer(caddr))
+
+	var toxErrBootstrap C.TOX_ERR_BOOTSTRAP
+	success := C.tox_add_tcp_relay(t.tox, caddr, (C.uint16_t)(port), (*C.uint8_t)(&publickey[0]), &toxErrBootstrap)
+
+	switch ToxErrBootstrap(toxErrBootstrap) {
+	case TOX_ERR_BOOTSTRAP_OK:
+		return nil
+	case TOX_ERR_BOOTSTRAP_NULL:
+		return ErrArgs
+	case TOX_ERR_BOOTSTRAP_BAD_HOST:
+		return ErrFuncFail
+	case TOX_ERR_BOOTSTRAP_BAD_PORT:
+		return ErrFuncFail
+	}
+
+	if !bool(success) {
+		return ErrFuncFail
+	}
+
+	return ErrUnknown
 }
 
 /* SelfGetConnectionStatus returns true if Tox is connected to the DHT. */

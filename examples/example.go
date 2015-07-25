@@ -27,12 +27,12 @@ func main() {
 	var filepath string
 	var options *gotox.Options
 
-	flag.StringVar(&filepath, "save", "", "path to save file")
+	flag.StringVar(&filepath, "save", "./example_savedata", "path to save file")
 	flag.Parse()
 
 	fmt.Printf("[INFO] Using Tox version %d.%d.%d\n", gotox.VersionMajor(), gotox.VersionMinor(), gotox.VersionPatch())
 
-	if (!gotox.VersionIsCompatible(0, 0, 0)) {
+	if !gotox.VersionIsCompatible(0, 0, 0) {
 		fmt.Println("[ERROR] The compiled library (toxcore) is not compatible with this example.")
 		fmt.Println("[ERROR] Please update your Tox library. If this error persists, please report it to the gotox developers.")
 		fmt.Println("[ERROR] Thanks!")
@@ -41,6 +41,7 @@ func main() {
 
 	savedata, err := loadData(filepath)
 	if err == nil {
+		fmt.Println("[INFO] Loading Tox profile from savedata...")
 		options = &gotox.Options{
 			true, true,
 			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
@@ -48,11 +49,8 @@ func main() {
 			// an option to disable it.
 			gotox.TOX_SAVEDATA_TYPE_TOX_SAVE, savedata}
 	} else {
-		options = &gotox.Options{
-			true, true,
-			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
-			0,
-			gotox.TOX_SAVEDATA_TYPE_NONE, nil}
+		fmt.Println("[INFO] Creating new Tox profile...")
+		options = nil // default options
 		newToxInstance = true
 	}
 
@@ -100,9 +98,9 @@ func main() {
 	for isRunning {
 		select {
 		case <-c:
-			fmt.Println("Saving...")
+			fmt.Printf("\nSaving...\n")
 			if err := saveData(tox, filepath); err != nil {
-				fmt.Println(err)
+				fmt.Println("[ERROR]", err)
 			}
 			fmt.Println("Killing")
 			isRunning = false
@@ -165,8 +163,17 @@ func onFriendMessage(t *gotox.Tox, friendNumber uint32, messagetype gotox.ToxMes
 func onFileRecv(t *gotox.Tox, friendNumber uint32, fileNumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
 	// Accept any file send request
 	t.FileControl(friendNumber, true, fileNumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
+
+	if kind == gotox.TOX_FILE_KIND_AVATAR {
+		filename += ".png"
+	}
+
 	// Init *File handle
-	f, _ := os.Create("example_" + filename)
+	f, err := os.Create("example_" + filename)
+	if err != nil {
+		fmt.Println("[ERROR] Error creating file", "example_"+filename)
+	}
+
 	// Append f to the map[uint8]*os.File
 	transfers[fileNumber] = f
 	transfersFilesizes[fileNumber] = filesize

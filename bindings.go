@@ -272,6 +272,32 @@ func (t *Tox) SelfGetNospam() (uint32, error) {
 	return uint32(n), nil
 }
 
+/* SelfGetPublicKey returns the publickey of your profile. */
+func (t *Tox) SelfGetPublicKey() ([]byte, error) {
+	if t.tox == nil {
+		return nil, ErrToxInit
+	}
+
+	publickey := (*C.uint8_t)(C.malloc(TOX_PUBLIC_KEY_SIZE))
+	defer C.free(unsafe.Pointer(publickey))
+
+	C.tox_self_get_public_key(t.tox, publickey)
+	return C.GoBytes(unsafe.Pointer(publickey), C.int(TOX_PUBLIC_KEY_SIZE)), nil
+}
+
+/* SelfGetSecretKey returns the secretkey of your profile. */
+func (t *Tox) SelfGetSecretKey() ([]byte, error) {
+	if t.tox == nil {
+		return nil, ErrToxInit
+	}
+
+	secretkey := (*C.uint8_t)(C.malloc(TOX_SECRET_KEY_SIZE))
+	defer C.free(unsafe.Pointer(secretkey))
+
+	C.tox_self_get_secret_key(t.tox, secretkey)
+	return C.GoBytes(unsafe.Pointer(secretkey), C.int(TOX_SECRET_KEY_SIZE)), nil
+}
+
 /* SelfSetName sets your nickname. The maximum name length is MAX_NAME_LENGTH. */
 func (t *Tox) SelfSetName(name string) error {
 	if t.tox == nil {

@@ -26,8 +26,8 @@ DONE tox_iterate
 DONE tox_self_get_address
 DONE tox_self_set_nospam
 DONE tox_self_get_nospam
-tox_self_get_public_key
-tox_self_get_secret_key
+DONE tox_self_get_public_key
+DONE tox_self_get_secret_key
 DONE tox_self_set_name
 DONE tox_self_get_name_size
 DONE tox_self_get_name

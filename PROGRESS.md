@@ -62,7 +62,7 @@ DONE tox_friend_send_message
 DONE tox_callback_friend_read_receipt
 DONE tox_callback_friend_request
 DONE tox_callback_friend_message
-tox_hash
+DONE tox_hash
 DONE tox_file_control
 DONE tox_callback_file_recv_control
 tox_file_seek

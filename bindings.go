@@ -849,6 +849,33 @@ func (t *Tox) FriendSendMessage(friendnumber uint32, messagetype ToxMessageType,
 	return uint32(n), nil
 }
 
+/* Hash generates a cryptographic hash of the given data (can be used to cache
+ * avatars). */
+func (t *Tox) Hash(data []byte) ([]byte, error) {
+	if t.tox == nil {
+		return nil, ErrToxInit
+	}
+
+	var uint8val C.uint8_t
+
+	cDataPtr := C.malloc(C.size_t(len(data)))
+	defer C.free(cDataPtr)
+
+	for i := 0; i < len(data); i++ {
+		*(*C.uint8_t)(unsafe.Pointer(uintptr(cDataPtr) + uintptr(i)*unsafe.Sizeof(uint8val))) = C.uint8_t(data[i])
+	}
+
+	cHash := (*C.uint8_t)(C.malloc(TOX_HASH_LENGTH))
+	defer C.free(unsafe.Pointer(cHash))
+
+	success := C.tox_hash(cHash, (*C.uint8_t)(cDataPtr), C.size_t(len(data)))
+	if !bool(success) {
+		return nil, ErrFuncFail
+	}
+
+	return C.GoBytes(unsafe.Pointer(cHash), C.int(TOX_HASH_LENGTH)), nil
+}
+
 /* FileControl sends a FileControl to a friend with the given friendnumber. */
 func (t *Tox) FileControl(friendnumber uint32, receiving bool, filenumber uint32, fileControl ToxFileControl, data []byte) error {
 	if t.tox == nil {

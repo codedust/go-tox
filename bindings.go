@@ -6,6 +6,27 @@ import "C"
 import "time"
 import "unsafe"
 
+/* VersionMajor returns the major version number of the used Tox library */
+func VersionMajor() uint32 {
+	return uint32(C.tox_version_major());
+}
+
+/* VersionMinor returns the minor version number of the used Tox library */
+func VersionMinor() uint32 {
+	return uint32(C.tox_version_minor());
+}
+
+/* VersionPatch returns the patch number of the used Tox library */
+func VersionPatch() uint32 {
+	return uint32(C.tox_version_patch());
+}
+
+/* VersionIsCompatible returns whether the compiled Tox library version is
+ * compatible with the passed version numbers. */
+func VersionIsCompatible(major uint32, minor uint32, patch uint32) bool {
+	return bool(C.tox_version_is_compatible((C.uint32_t)(major), (C.uint32_t)(minor), (C.uint32_t)(patch)));
+}
+
 /* New returns a new Tox instance. */
 func New(options *Options) (*Tox, error) {
 	var ctox *C.Tox

@@ -6,10 +6,10 @@ Groupchats will probably not be added before the new groupchat API is ready.
 
 ## toxcore.h
 ```
-tox_version_major
-tox_version_minor
-tox_version_patch
-tox_version_is_compatible
+DONE tox_version_major
+DONE tox_version_minor
+DONE tox_version_patch
+DONE tox_version_is_compatible
 WONT tox_options_default
 WONT tox_options_new
 tox_options_free

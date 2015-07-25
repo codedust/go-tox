@@ -30,6 +30,15 @@ func main() {
 	flag.StringVar(&filepath, "save", "", "path to save file")
 	flag.Parse()
 
+	fmt.Printf("[INFO] Using Tox version %d.%d.%d\n", gotox.VersionMajor(), gotox.VersionMinor(), gotox.VersionPatch())
+
+	if (!gotox.VersionIsCompatible(0, 0, 0)) {
+		fmt.Println("[ERROR] The compiled library (toxcore) is not compatible with this example.")
+		fmt.Println("[ERROR] Please update your Tox library. If this error persists, please report it to the gotox developers.")
+		fmt.Println("[ERROR] Thanks!")
+		return
+	}
+
 	savedata, err := loadData(filepath)
 	if err == nil {
 		options = &gotox.Options{

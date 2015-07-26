@@ -72,8 +72,8 @@ DONE tox_file_send_chunk
 DONE tox_callback_file_chunk_request
 DONE tox_callback_file_recv
 DONE tox_callback_file_recv_chunk
-tox_friend_send_lossy_packet
-tox_friend_send_lossless_packet
+DONE tox_friend_send_lossy_packet
+DONE tox_friend_send_lossless_packet
 DONE tox_callback_friend_lossy_packet
 DONE tox_callback_friend_lossless_packet
 DONE tox_self_get_dht_id

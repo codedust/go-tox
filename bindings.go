@@ -978,6 +978,68 @@ func (t *Tox) FileSendChunk(friendNumber uint32, fileNumber uint32, position uin
 	return nil
 }
 
+/* FriendSendLossyPacket sends a custom lossy packet to a friend.
+ * The first byte of data must be in the range 200-254. Maximum length of a
+ * custom packet is TOX_MAX_CUSTOM_PACKET_SIZE. */
+func (t *Tox) FriendSendLossyPacket(friendNumber uint32, data []byte) error {
+	if t.tox == nil {
+		return ErrToxInit
+	}
+
+	var cData *C.uint8_t
+
+	if len(data) == 0 {
+		cData = nil
+	} else {
+		cData = (*C.uint8_t)(&data[0])
+	}
+
+	var toxErrFriendCustomPacket C.TOX_ERR_FRIEND_CUSTOM_PACKET
+	C.tox_friend_send_lossy_packet(t.tox, C.uint32_t(friendNumber), cData, C.size_t(len(data)), &toxErrFriendCustomPacket)
+
+	switch ToxErrFriendCustomPacket(toxErrFriendCustomPacket) {
+	case TOX_ERR_FRIEND_CUSTOM_PACKET_OK:
+		return nil
+	case TOX_ERR_FRIEND_CUSTOM_PACKET_NULL:
+		return ErrArgs
+	default:
+		return ErrFuncFail
+	}
+
+	return ErrUnknown
+}
+
+/* FriendSendLosslessPacket sends a custom lossless packet to a friend.
+ * The first byte of data must be in the range 160-191. Maximum length of a
+ * custom packet is TOX_MAX_CUSTOM_PACKET_SIZE. */
+func (t *Tox) FriendSendLosslessPacket(friendNumber uint32, data []byte) error {
+	if t.tox == nil {
+		return ErrToxInit
+	}
+
+	var cData *C.uint8_t
+
+	if len(data) == 0 {
+		cData = nil
+	} else {
+		cData = (*C.uint8_t)(&data[0])
+	}
+
+	var toxErrFriendCustomPacket C.TOX_ERR_FRIEND_CUSTOM_PACKET
+	C.tox_friend_send_lossless_packet(t.tox, C.uint32_t(friendNumber), cData, C.size_t(len(data)), &toxErrFriendCustomPacket)
+
+	switch ToxErrFriendCustomPacket(toxErrFriendCustomPacket) {
+	case TOX_ERR_FRIEND_CUSTOM_PACKET_OK:
+		return nil
+	case TOX_ERR_FRIEND_CUSTOM_PACKET_NULL:
+		return ErrArgs
+	default:
+		return ErrFuncFail
+	}
+
+	return ErrUnknown
+}
+
 /* SelfGetDhtId returns the temporary DHT public key of this instance. */
 func (t *Tox) SelfGetDhtId() ([]byte, error) {
 	if t.tox == nil {

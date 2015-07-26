@@ -995,3 +995,15 @@ func (t *Tox) FileSendChunk(friendNumber uint32, fileNumber uint32, position uin
 	}
 	return nil
 }
+
+/* SelfGetDhtId returns the temporary DHT public key of this instance. */
+func (t *Tox) SelfGetDhtId() ([]byte, error) {
+	if t.tox == nil {
+		return nil, ErrToxInit
+	}
+
+	publickey := make([]byte, TOX_PUBLIC_KEY_SIZE)
+
+	C.tox_self_get_dht_id(t.tox, (*C.uint8_t)(&publickey[0]))
+	return publickey, nil
+}

@@ -430,7 +430,7 @@ func (t *Tox) SelfGetStatus() (ToxUserStatus, error) {
 
 /* FriendAdd adds a friend by sending a friend request containing the given
  * message.
- * Returns the friend number on succes, or a ToxErrFriendAdd on failure.
+ * Returns the friend number on success, or a ToxErrFriendAdd on failure.
  */
 func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 	if t.tox == nil {
@@ -447,32 +447,30 @@ func (t *Tox) FriendAdd(address []byte, message string) (uint32, error) {
 	var toxErrFriendAdd C.TOX_ERR_FRIEND_ADD
 	ret := C.tox_friend_add(t.tox, caddr, cmessage, (C.size_t)(len(message)), &toxErrFriendAdd)
 
-	var err error
-
 	switch ToxErrFriendAdd(toxErrFriendAdd) {
 	case TOX_ERR_FRIEND_ADD_OK:
-		err = nil
+		return uint32(ret), nil
 	case TOX_ERR_FRIEND_ADD_NULL:
-		err = ErrFriendAddNull
+		return uint32(ret), ErrArgs
 	case TOX_ERR_FRIEND_ADD_TOO_LONG:
-		err = ErrFriendAddTooLong
+		return uint32(ret), ErrFriendAddTooLong
 	case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
-		err = ErrFriendAddNoMessage
+		return uint32(ret), ErrFriendAddNoMessage
 	case TOX_ERR_FRIEND_ADD_OWN_KEY:
-		err = ErrFriendAddOwnKey
+		return uint32(ret), ErrFriendAddOwnKey
 	case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
-		err = ErrFriendAddAlreadySent
+		return uint32(ret), ErrFriendAddAlreadySent
 	case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
-		err = ErrFriendAddBadChecksum
+		return uint32(ret), ErrFriendAddBadChecksum
 	case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
-		err = ErrFriendAddSetNewNospam
+		return uint32(ret), ErrFriendAddSetNewNospam
 	case TOX_ERR_FRIEND_ADD_MALLOC:
-		err = ErrFriendAddNoMem
+		return uint32(ret), ErrFriendAddNoMem
 	default:
-		err = ErrFriendAddUnkown
+		return uint32(ret), ErrFuncFail
 	}
 
-	return uint32(ret), err
+	return uint32(ret), ErrUnknown
 }
 
 /* FriendAddNorequest adds a friend without sending a friend request.
@@ -493,32 +491,30 @@ func (t *Tox) FriendAddNorequest(publickey []byte) (uint32, error) {
 		return C.UINT32_MAX, ErrFuncFail
 	}
 
-	var err error
-
 	switch ToxErrFriendAdd(toxErrFriendAdd) {
 	case TOX_ERR_FRIEND_ADD_OK:
-		err = nil
+		return uint32(ret), nil
 	case TOX_ERR_FRIEND_ADD_NULL:
-		err = ErrFriendAddNull
+		return uint32(ret), ErrArgs
 	case TOX_ERR_FRIEND_ADD_TOO_LONG:
-		err = ErrFriendAddTooLong
+		return uint32(ret), ErrFriendAddTooLong
 	case TOX_ERR_FRIEND_ADD_NO_MESSAGE:
-		err = ErrFriendAddNoMessage
+		return uint32(ret), ErrFriendAddNoMessage
 	case TOX_ERR_FRIEND_ADD_OWN_KEY:
-		err = ErrFriendAddOwnKey
+		return uint32(ret), ErrFriendAddOwnKey
 	case TOX_ERR_FRIEND_ADD_ALREADY_SENT:
-		err = ErrFriendAddAlreadySent
+		return uint32(ret), ErrFriendAddAlreadySent
 	case TOX_ERR_FRIEND_ADD_BAD_CHECKSUM:
-		err = ErrFriendAddBadChecksum
+		return uint32(ret), ErrFriendAddBadChecksum
 	case TOX_ERR_FRIEND_ADD_SET_NEW_NOSPAM:
-		err = ErrFriendAddSetNewNospam
+		return uint32(ret), ErrFriendAddSetNewNospam
 	case TOX_ERR_FRIEND_ADD_MALLOC:
-		err = ErrFriendAddNoMem
+		return uint32(ret), ErrFriendAddNoMem
 	default:
-		err = ErrFriendAddUnkown
+		return uint32(ret), ErrFuncFail
 	}
 
-	return uint32(ret), err
+	return uint32(ret), ErrUnknown
 }
 
 /* FriendDelete removes a friend. */
@@ -528,23 +524,18 @@ func (t *Tox) FriendDelete(friendNumber uint32) error {
 	}
 
 	var toxErrFriendDelete C.TOX_ERR_FRIEND_DELETE = C.TOX_ERR_FRIEND_DELETE_OK
-	ret := C.tox_friend_delete(t.tox, (C.uint32_t)(friendNumber), &toxErrFriendDelete)
+	C.tox_friend_delete(t.tox, (C.uint32_t)(friendNumber), &toxErrFriendDelete)
 
-	var err error
 	switch ToxErrFriendDelete(toxErrFriendDelete) {
 	case TOX_ERR_FRIEND_DELETE_OK:
-		err = nil
+		return nil
 	case TOX_ERR_FRIEND_DELETE_FRIEND_NOT_FOUND:
-		err = ErrFuncFail
+		return ErrArgs
 	default:
-		err = ErrUnknown
-	}
-
-	if ret != true {
 		return ErrFuncFail
 	}
 
-	return err
+	return ErrUnknown
 }
 
 /* FriendByPublicKey returns the friend number associated to a given publickey. */
@@ -560,20 +551,16 @@ func (t *Tox) FriendByPublicKey(publickey []byte) (uint32, error) {
 	var toxErrFriendByPublicKey C.TOX_ERR_FRIEND_BY_PUBLIC_KEY
 	n := C.tox_friend_by_public_key(t.tox, (*C.uint8_t)(&publickey[0]), &toxErrFriendByPublicKey)
 
-	var err error
-
 	switch ToxErrFriendByPublicKey(toxErrFriendByPublicKey) {
 	case TOX_ERR_FRIEND_BY_PUBLIC_KEY_OK:
-		err = nil
+		return uint32(n), nil
 	case TOX_ERR_FRIEND_BY_PUBLIC_KEY_NULL:
-		err = ErrArgs
-	case TOX_ERR_FRIEND_BY_PUBLIC_KEY_NOT_FOUND:
-		err = ErrFuncFail
+		return uint32(n), ErrArgs
 	default:
-		err = ErrUnknown
+		return uint32(n), ErrFuncFail
 	}
 
-	return uint32(n), err
+	return uint32(n), ErrUnknown
 }
 
 /* FriendExists returns true if a friend exists with given friendNumber. */
@@ -582,9 +569,9 @@ func (t *Tox) FriendExists(friendNumber uint32) (bool, error) {
 		return false, ErrToxInit
 	}
 
-	ret := C.tox_friend_exists(t.tox, (C.uint32_t)(friendNumber))
+	success := C.tox_friend_exists(t.tox, (C.uint32_t)(friendNumber))
 
-	return bool(ret), nil
+	return bool(success), nil
 }
 
 /* SelfGetFriendlistSize returns the number of friends on the friendlist. */
@@ -624,23 +611,18 @@ func (t *Tox) FriendGetPublickey(friendNumber uint32) ([]byte, error) {
 	}
 	publickey := make([]byte, TOX_PUBLIC_KEY_SIZE)
 	var toxErrFriendGetPublicKey C.TOX_ERR_FRIEND_GET_PUBLIC_KEY = C.TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK
-	ret := C.tox_friend_get_public_key(t.tox, (C.uint32_t)(friendNumber), (*C.uint8_t)(&publickey[0]), &toxErrFriendGetPublicKey)
+	C.tox_friend_get_public_key(t.tox, (C.uint32_t)(friendNumber), (*C.uint8_t)(&publickey[0]), &toxErrFriendGetPublicKey)
 
-	var err error
 	switch ToxErrFriendGetPublicKey(toxErrFriendGetPublicKey) {
 	case TOX_ERR_FRIEND_GET_PUBLIC_KEY_OK:
-		err = nil
+		return publickey, nil
 	case TOX_ERR_FRIEND_GET_PUBLIC_KEY_FRIEND_NOT_FOUND:
-		err = ErrFuncFail
+		return nil, ErrArgs
 	default:
-		err = ErrUnknown
-	}
-
-	if ret != true {
 		return nil, ErrFuncFail
 	}
 
-	return publickey, err
+	return nil, ErrUnknown
 }
 
 /* FriendGetLastOnline returns the timestamp of the last time the friend with

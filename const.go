@@ -114,12 +114,10 @@ const (
 )
 
 var (
-	ErrFriendAddNull         = errors.New("One of the arguments was NULL")
 	ErrFriendAddTooLong      = errors.New("Message too long")
 	ErrFriendAddNoMessage    = errors.New("Empty message")
 	ErrFriendAddOwnKey       = errors.New("Own key")
 	ErrFriendAddAlreadySent  = errors.New("Already sent")
-	ErrFriendAddUnkown       = errors.New("Unknown error")
 	ErrFriendAddBadChecksum  = errors.New("Bad checksum in address")
 	ErrFriendAddSetNewNospam = errors.New("Different nospam")
 	ErrFriendAddNoMem        = errors.New("Failed increasing friend list")

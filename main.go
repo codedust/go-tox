@@ -3,7 +3,7 @@ package gotox
 /* gotox - a go wrapper for toxcore
  *
  * This work is based on the great work by organ
- * (https://github.com/organ/gotox/).
+ * (https://github.com/organ/golibtox).
  *
  * Pull requests, bug reporting and feature request (via github issues) are
  * always welcome. :)

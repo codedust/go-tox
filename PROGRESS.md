@@ -65,8 +65,8 @@ DONE tox_callback_friend_message
 DONE tox_hash
 DONE tox_file_control
 DONE tox_callback_file_recv_control
-tox_file_seek
-tox_file_get_file_id
+DONE tox_file_seek
+DONE tox_file_get_file_id
 DONE tox_file_send
 DONE tox_file_send_chunk
 DONE tox_callback_file_chunk_request

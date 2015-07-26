@@ -1007,3 +1007,36 @@ func (t *Tox) SelfGetDhtId() ([]byte, error) {
 	C.tox_self_get_dht_id(t.tox, (*C.uint8_t)(&publickey[0]))
 	return publickey, nil
 }
+
+/* SelfGetUDPPort returns the UDP port the Tox instance is bound to. */
+func (t *Tox) SelfGetUDPPort() (uint16, error) {
+	if t.tox == nil {
+		return 0, ErrToxInit
+	}
+
+	var toxErrGetPort C.TOX_ERR_GET_PORT
+	port := C.tox_self_get_udp_port(t.tox, &toxErrGetPort)
+
+	if ToxErrGetPort(toxErrGetPort) != TOX_ERR_GET_PORT_OK {
+		return 0, ErrFuncFail
+	}
+
+	return uint16(port), nil
+}
+
+/* SelfGetTCPPort returns the TCP port the Tox instance is bound to. This is
+ * only relevant if the instance is acting as a TCP relay. */
+func (t *Tox) SelfGetTCPPort() (uint16, error) {
+	if t.tox == nil {
+		return 0, ErrToxInit
+	}
+
+	var toxErrGetPort C.TOX_ERR_GET_PORT
+	port := C.tox_self_get_tcp_port(t.tox, &toxErrGetPort)
+
+	if ToxErrGetPort(toxErrGetPort) != TOX_ERR_GET_PORT_OK {
+		return 0, ErrFuncFail
+	}
+
+	return uint16(port), nil
+}

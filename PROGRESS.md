@@ -76,9 +76,9 @@ tox_friend_send_lossy_packet
 tox_friend_send_lossless_packet
 DONE tox_callback_friend_lossy_packet
 DONE tox_callback_friend_lossless_packet
-tox_self_get_dht_id
-tox_self_get_udp_port
-tox_self_get_tcp_port
+DONE tox_self_get_dht_id
+DONE tox_self_get_udp_port
+DONE tox_self_get_tcp_port
 tox_callback_group_invite
 tox_callback_group_message
 tox_callback_group_action

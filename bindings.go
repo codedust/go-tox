@@ -278,11 +278,10 @@ func (t *Tox) SelfGetPublicKey() ([]byte, error) {
 		return nil, ErrToxInit
 	}
 
-	publickey := (*C.uint8_t)(C.malloc(TOX_PUBLIC_KEY_SIZE))
-	defer C.free(unsafe.Pointer(publickey))
+	publickey := make([]byte, TOX_PUBLIC_KEY_SIZE)
 
-	C.tox_self_get_public_key(t.tox, publickey)
-	return C.GoBytes(unsafe.Pointer(publickey), C.int(TOX_PUBLIC_KEY_SIZE)), nil
+	C.tox_self_get_public_key(t.tox, (*C.uint8_t)(&publickey[0]))
+	return publickey, nil
 }
 
 /* SelfGetSecretKey returns the secretkey of your profile. */
@@ -291,11 +290,10 @@ func (t *Tox) SelfGetSecretKey() ([]byte, error) {
 		return nil, ErrToxInit
 	}
 
-	secretkey := (*C.uint8_t)(C.malloc(TOX_SECRET_KEY_SIZE))
-	defer C.free(unsafe.Pointer(secretkey))
+	secretkey := make([]byte, TOX_SECRET_KEY_SIZE)
 
-	C.tox_self_get_secret_key(t.tox, secretkey)
-	return C.GoBytes(unsafe.Pointer(secretkey), C.int(TOX_SECRET_KEY_SIZE)), nil
+	C.tox_self_get_secret_key(t.tox, (*C.uint8_t)(&secretkey[0]))
+	return secretkey, nil
 }
 
 /* SelfSetName sets your nickname. The maximum name length is MAX_NAME_LENGTH. */
@@ -856,28 +854,26 @@ func (t *Tox) Hash(data []byte) ([]byte, error) {
 		return nil, ErrToxInit
 	}
 
-	var uint8val C.uint8_t
+	var cData *C.uint8_t
 
-	cDataPtr := C.malloc(C.size_t(len(data)))
-	defer C.free(cDataPtr)
-
-	for i := 0; i < len(data); i++ {
-		*(*C.uint8_t)(unsafe.Pointer(uintptr(cDataPtr) + uintptr(i)*unsafe.Sizeof(uint8val))) = C.uint8_t(data[i])
+	if len(data) == 0 {
+		cData = nil
+	} else {
+		cData = (*C.uint8_t)(&data[0])
 	}
 
-	cHash := (*C.uint8_t)(C.malloc(TOX_HASH_LENGTH))
-	defer C.free(unsafe.Pointer(cHash))
+	hash := make([]byte, TOX_HASH_LENGTH)
 
-	success := C.tox_hash(cHash, (*C.uint8_t)(cDataPtr), C.size_t(len(data)))
+	success := C.tox_hash((*C.uint8_t)(&hash[0]), cData, C.size_t(len(data)))
 	if !bool(success) {
 		return nil, ErrFuncFail
 	}
 
-	return C.GoBytes(unsafe.Pointer(cHash), C.int(TOX_HASH_LENGTH)), nil
+	return hash, nil
 }
 
 /* FileControl sends a FileControl to a friend with the given friendNumber. */
-func (t *Tox) FileControl(friendNumber uint32, receiving bool, fileNumber uint32, fileControl ToxFileControl, data []byte) error {
+func (t *Tox) FileControl(friendNumber uint32, fileNumber uint32, fileControl ToxFileControl) error {
 	if t.tox == nil {
 		return ErrToxInit
 	}
@@ -925,16 +921,15 @@ func (t *Tox) FileGetFileId(friendNumber uint32, fileNumber uint32) ([]byte, err
 		return nil, ErrToxInit
 	}
 
-	cFileId := (*C.uint8_t)(C.malloc(TOX_FILE_ID_LENGTH))
-	defer C.free(unsafe.Pointer(cFileId))
+	fileId := make([]byte, TOX_FILE_ID_LENGTH)
 
 	var toxErrFileGet C.TOX_ERR_FILE_GET
-	success := C.tox_file_get_file_id(t.tox, C.uint32_t(friendNumber), C.uint32_t(fileNumber), cFileId, &toxErrFileGet)
+	success := C.tox_file_get_file_id(t.tox, C.uint32_t(friendNumber), C.uint32_t(fileNumber), (*C.uint8_t)(&fileId[0]), &toxErrFileGet)
 	if !bool(success) || ToxErrFileGet(toxErrFileGet) != TOX_ERR_FILE_GET_OK {
 		return nil, ErrFuncFail
 	}
 
-	return C.GoBytes(unsafe.Pointer(cFileId), C.int(TOX_FILE_ID_LENGTH)), nil
+	return fileId, nil
 }
 
 /* FileSend sends a file transmission request. */

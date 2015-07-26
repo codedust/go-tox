@@ -162,7 +162,7 @@ func onFriendMessage(t *gotox.Tox, friendNumber uint32, messagetype gotox.ToxMes
 
 func onFileRecv(t *gotox.Tox, friendNumber uint32, fileNumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
 	// Accept any file send request
-	t.FileControl(friendNumber, true, fileNumber, gotox.TOX_FILE_CONTROL_RESUME, nil)
+	t.FileControl(friendNumber, fileNumber, gotox.TOX_FILE_CONTROL_RESUME)
 
 	if kind == gotox.TOX_FILE_KIND_AVATAR {
 		filename += ".png"

@@ -43,11 +43,16 @@ func main() {
 	if err == nil {
 		fmt.Println("[INFO] Loading Tox profile from savedata...")
 		options = &gotox.Options{
-			true, true,
-			gotox.TOX_PROXY_TYPE_NONE, "127.0.0.1", 5555, 0, 0,
-			0, // local TCP server is disabled. Only enable it if your client provides
-			// an option to disable it.
-			gotox.TOX_SAVEDATA_TYPE_TOX_SAVE, savedata}
+			IPv6Enabled:  true,
+			UDPEnabled:   true,
+			ProxyType:    gotox.TOX_PROXY_TYPE_NONE,
+			ProxyHost:    "127.0.0.1",
+			ProxyPort:    5555,
+			StartPort:    0,
+			EndPort:      0,
+			TcpPort:      0, // only enable TCP server if your client provides an option to disable it
+			SaveDataType: gotox.TOX_SAVEDATA_TYPE_TOX_SAVE,
+			SaveData:     savedata}
 	} else {
 		fmt.Println("[INFO] Creating new Tox profile...")
 		options = nil // default options

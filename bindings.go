@@ -85,7 +85,32 @@ func New(options *Options) (*Tox, error) {
 	cTox = C.tox_new(cOptions, &toxErrNew)
 	if cTox == nil || ToxErrNew(toxErrNew) != TOX_ERR_NEW_OK {
 		C.tox_options_free(cOptions)
-		return nil, ErrToxNew
+		switch ToxErrNew(toxErrNew) {
+		case TOX_ERR_NEW_NULL:
+			return nil, ErrArgs
+		case TOX_ERR_NEW_MALLOC:
+			return nil, ErrNewMalloc
+		case TOX_ERR_NEW_PORT_ALLOC:
+			return nil, ErrNewPortAlloc
+		case TOX_ERR_NEW_PROXY_BAD_TYPE:
+			return nil, ErrNewProxy
+		case TOX_ERR_NEW_PROXY_BAD_HOST:
+			return nil, ErrNewProxy
+		case TOX_ERR_NEW_PROXY_BAD_PORT:
+			return nil, ErrNewProxy
+		case TOX_ERR_NEW_PROXY_NOT_FOUND:
+			return nil, ErrNewProxy
+		case TOX_ERR_NEW_LOAD_ENCRYPTED:
+			return nil, ErrNewLoadEnc
+		case TOX_ERR_NEW_LOAD_BAD_FORMAT:
+			return nil, ErrNewLoadBadFormat
+		}
+
+		if cTox == nil {
+			return nil, ErrToxNew
+		}
+
+		return nil, ErrUnknown
 	}
 
 	t := &Tox{tox: cTox, cOptions: cOptions}

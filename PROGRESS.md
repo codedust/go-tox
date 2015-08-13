@@ -1,6 +1,6 @@
 # List of implemented toxcore features
-`DONE` This means the function is already implemented.
-`WONT` This means the function will probably not be implemented.
+`DONE` means the function is already implemented.
+`WONT` means the function will probably not be implemented.
 
 Groupchats will probably not be added before the new groupchat API is ready.
 

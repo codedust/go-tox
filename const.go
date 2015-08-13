@@ -89,6 +89,14 @@ var (
 	ErrUnknown  = errors.New("An unknown error occoured")
 )
 
+var (
+	ErrNewMalloc        = errors.New("Memory allocation failed")
+	ErrNewPortAlloc     = errors.New("Could not bind to port")
+	ErrNewProxy         = errors.New("Invalid proxy configuration")
+	ErrNewLoadEnc       = errors.New("The savedata is encrypted")
+	ErrNewLoadBadFormat = errors.New("The savedata format is invalid")
+)
+
 type ToxErrNew C.enum_TOX_ERR_NEW
 
 const (

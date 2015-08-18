@@ -18,10 +18,13 @@ type Server struct {
 	PublicKey []byte
 }
 
+const MAX_AVATAR_SIZE = 65536 // see github.com/Tox/Tox-STS/blob/master/STS.md#avatars
+
 type FileTransfer struct {
 	fileHandle *os.File
-	fileSize uint64
+	fileSize   uint64
 }
+
 // Map of active file transfers
 var transfers = make(map[uint32]FileTransfer)
 
@@ -168,21 +171,39 @@ func onFriendMessage(t *gotox.Tox, friendNumber uint32, messagetype gotox.ToxMes
 }
 
 func onFileRecv(t *gotox.Tox, friendNumber uint32, fileNumber uint32, kind gotox.ToxFileKind, filesize uint64, filename string) {
-	// Accept any file send request
-	t.FileControl(friendNumber, fileNumber, gotox.TOX_FILE_CONTROL_RESUME)
-
 	if kind == gotox.TOX_FILE_KIND_AVATAR {
-		filename += ".png"
-	}
 
-	// Init *File handle
-	file, err := os.Create("example_" + filename)
-	if err != nil {
-		fmt.Println("[ERROR] Error creating file", "example_"+filename)
-	}
+		if filesize > MAX_AVATAR_SIZE {
+			// reject file send request
+			t.FileControl(friendNumber, fileNumber, gotox.TOX_FILE_CONTROL_CANCEL)
+			return
+		}
 
-	// Append f to the map[uint8]*os.File
-	transfers[fileNumber] = FileTransfer{fileHandle: file, fileSize: filesize}
+		publicKey, _ := t.FriendGetPublickey(friendNumber)
+		file, err := os.Create("example_" + hex.EncodeToString(publicKey) + ".png")
+		if err != nil {
+			fmt.Println("[ERROR] Error creating file", "example_"+hex.EncodeToString(publicKey)+".png")
+		}
+
+		// append the file to the map of active file transfers
+		transfers[fileNumber] = FileTransfer{fileHandle: file, fileSize: filesize}
+
+		// accept the file send request
+		t.FileControl(friendNumber, fileNumber, gotox.TOX_FILE_CONTROL_RESUME)
+
+	} else {
+		// accept files of any length
+		file, err := os.Create("example_" + filename)
+		if err != nil {
+			fmt.Println("[ERROR] Error creating file", "example_"+filename)
+		}
+
+		// append the file to the map of active file transfers
+		transfers[fileNumber] = FileTransfer{fileHandle: file, fileSize: filesize}
+
+		// accept the file send request
+		t.FileControl(friendNumber, fileNumber, gotox.TOX_FILE_CONTROL_RESUME)
+	}
 }
 
 func onFileRecvControl(t *gotox.Tox, friendNumber uint32, fileNumber uint32, fileControl gotox.ToxFileControl) {
@@ -228,7 +249,7 @@ func onFileChunkRequest(t *gotox.Tox, friendNumber uint32, fileNumber uint32, po
 }
 
 func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, position uint64, data []byte) {
-	transfer, ok := transfers[fileNumber];
+	transfer, ok := transfers[fileNumber]
 	if !ok {
 		if len(data) == 0 {
 			// ignore the zero-length chunk that indicates that the transfer is
@@ -243,8 +264,8 @@ func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, posit
 	// write data to the file handle
 	transfer.fileHandle.WriteAt(data, (int64)(position))
 
-	// Finished receiving file
-	if position + uint64(len(data)) >= transfer.fileSize {
+	// file transfer completed
+	if position+uint64(len(data)) >= transfer.fileSize {
 		// Some clients will send us another zero-length chunk without data (only
 		// required for stream, not necessary for files with a known size) and some
 		// will not.

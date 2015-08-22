@@ -193,6 +193,7 @@ func onFileRecv(t *gotox.Tox, friendNumber uint32, fileNumber uint32, kind gotox
 
 	} else {
 		// accept files of any length
+
 		file, err := os.Create("example_" + filename)
 		if err != nil {
 			fmt.Println("[ERROR] Error creating file", "example_"+filename)
@@ -215,6 +216,7 @@ func onFileRecvControl(t *gotox.Tox, friendNumber uint32, fileNumber uint32, fil
 
 	if fileControl == gotox.TOX_FILE_CONTROL_CANCEL {
 		// delete file handle
+		transfer.fileHandle.Sync()
 		transfer.fileHandle.Close()
 		delete(transfers, fileNumber)
 	}
@@ -227,11 +229,7 @@ func onFileChunkRequest(t *gotox.Tox, friendNumber uint32, fileNumber uint32, po
 		return
 	}
 
-	// read from the file handle
-	if length+position > transfer.fileSize {
-		length = transfer.fileSize - position
-	}
-
+	// a zero-length chunk request confirms that the file was successfully transferred
 	if length == 0 {
 		transfer.fileHandle.Close()
 		delete(transfers, fileNumber)
@@ -239,12 +237,15 @@ func onFileChunkRequest(t *gotox.Tox, friendNumber uint32, fileNumber uint32, po
 		return
 	}
 
+	// read the requested data to send
 	data := make([]byte, length)
 	_, err := transfers[fileNumber].fileHandle.ReadAt(data, int64(position))
 	if err != nil {
 		fmt.Println("Error reading file", err)
+		return
 	}
 
+	// send the requested data
 	t.FileSendChunk(friendNumber, fileNumber, position, data)
 }
 
@@ -261,16 +262,16 @@ func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, posit
 		return
 	}
 
-	// write data to the file handle
+	// write the received data to the file handle
 	transfer.fileHandle.WriteAt(data, (int64)(position))
 
 	// file transfer completed
 	if position+uint64(len(data)) >= transfer.fileSize {
 		// Some clients will send us another zero-length chunk without data (only
-		// required for stream, not necessary for files with a known size) and some
+		// required for streams, not necessary for files with a known size) and some
 		// will not.
-		// We will delete the file handle now (we aleady reveived the whole file)
-		// and ignore the file handle error when the empty chunk arrives.
+		// We will delete the file handle now (we aleady received the whole file)
+		// and ignore the file handle error when the zero-length chunk arrives.
 
 		transfer.fileHandle.Sync()
 		transfer.fileHandle.Close()
@@ -280,6 +281,7 @@ func onFileRecvChunk(t *gotox.Tox, friendNumber uint32, fileNumber uint32, posit
 	}
 }
 
+// loadData reads a file and returns its content as a byte array
 func loadData(filepath string) ([]byte, error) {
 	if len(filepath) == 0 {
 		return nil, errors.New("Empty path")
@@ -293,6 +295,7 @@ func loadData(filepath string) ([]byte, error) {
 	return data, err
 }
 
+// saveData writes the savedata from toxcore to a file
 func saveData(t *gotox.Tox, filepath string) error {
 	if len(filepath) == 0 {
 		return errors.New("Empty path")

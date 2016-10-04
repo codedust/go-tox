@@ -259,7 +259,7 @@ func (t *Tox) Iterate() error {
 	}
 
 	t.mtx.Lock()
-	C.tox_iterate(t.tox)
+	C.tox_iterate(t.tox, unsafe.Pointer(t))
 	t.mtx.Unlock()
 
 	return nil

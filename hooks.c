@@ -3,8 +3,8 @@
 /* Convenient macro:
  * Creates the C function to directly register a given callback */
 #define CREATE_HOOK(x) \
-static void set_##x(Tox *tox, void *t) { \
-  tox_##x(tox, hook_##x, t); \
+static void set_##x(Tox *tox) { \
+  tox_##x(tox, hook_##x); \
 }
 
 // Headers for the exported GO functions in hooks.go

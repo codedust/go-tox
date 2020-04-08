@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/codedust/go-tox?status.png)](http://godoc.org/github.com/codedust/go-tox)
+
 gotox
 =====
 

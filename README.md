@@ -1,6 +1,9 @@
 gotox
 =====
 
+[![GoDoc](https://godoc.org/github.com/codedust/go-tox?status.png)](http://godoc.org/github.com/codedust/go-tox)
+
+
 gotox is a Go wrapper for the [c-toxcore](https://github.com/TokTok/c-toxcore) library.
 
 Pull requests, bug reportings and feature requests (via github issues) are always welcome. :)
